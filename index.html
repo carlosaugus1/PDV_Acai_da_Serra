@@ -16,7 +16,7 @@
             --dark: #333333;
             --success: #4CAF50;
             --danger: #F44336;
-            --warning: #FF9800;
+            --warning: #FF9800; /* Laranja para "Pagamento Posterior" */
             --info: #2196F3;
             --touch-size: 70px;
             --border-radius: 12px;
@@ -100,12 +100,29 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            position: relative; /* Para o contador */
         }
         
         .tab.active {
             background: white;
             color: var(--primary);
             border-bottom: 3px solid var(--primary);
+        }
+        
+        .notification-badge {
+            background-color: var(--danger);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            padding: 2px 6px;
+            margin-left: 8px;
+            min-width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
         
         .tab-content { display: none; }
@@ -250,6 +267,7 @@
         .btn-secondary { background: #e0e0e0; color: var(--dark); }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
         
         .cart-items {
             min-height: 100px;
@@ -297,7 +315,17 @@
             border-top: 1px solid #ddd; padding-top: 10px;
         }
         
-        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .action-buttons { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 10px; 
+            margin-top: 10px; 
+        }
+        .action-buttons .touch-btn {
+            font-size: 1rem;
+            padding: 0 0.5rem;
+            height: 65px;
+        }
         
         .payment-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         
@@ -320,6 +348,50 @@
         }
         
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; align-items: stretch; }
+        
+        .open-orders-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            gap: 10px; 
+            align-items: stretch; 
+        }
+        
+        .open-order-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid var(--primary-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .open-order-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+            border-color: var(--primary);
+        }
+        .open-order-icon { 
+            font-size: 48px; 
+            margin-bottom: 5px; 
+            color: var(--primary); 
+            line-height: 1;
+        }
+        .open-order-name { 
+            font-weight: 600; 
+            color: #444; 
+            font-size: 1.1rem;
+            word-wrap: break-word;
+        }
+        .open-order-total { 
+            font-weight: bold; 
+            color: var(--primary); 
+            font-size: 1.2rem; 
+        }
         
         .product-card {
             background: #f9f9f9;
@@ -375,7 +447,7 @@
         .sales-history { max-height: 400px; overflow-y: auto; }
         
         .sale-item {
-            padding: 12px 40px 12px 12px;
+            padding: 12px 75px 12px 12px; /* Aumentado padding-right para caber 2 botões */
             border-bottom: 1px solid #eee; display: flex;
             justify-content: space-between; align-items: center; position: relative;
         }
@@ -384,6 +456,15 @@
         .sale-info { display: flex; flex-direction: column; flex: 1; }
         .sale-date { font-size: 12px; color: #666; }
         .sale-items { font-size: 14px; margin: 5px 0; font-weight: 600;}
+        
+        .sale-open-time {
+            font-size: 11px;
+            color: #555;
+            font-style: italic;
+            font-weight: normal;
+            margin-top: 3px;
+        }
+        
         .sale-payment { display: flex; align-items: center; gap: 5px; font-size: 14px; }
         .payment-icon { font-size: 16px; }
         .sale-total { font-weight: bold; color: var(--primary); font-size: 16px; }
@@ -394,6 +475,18 @@
             cursor: pointer; font-size: 20px; opacity: 0.7;
         }
         .delete-sale:hover { opacity: 1; }
+        
+        /* NOVO: Estilo do botão de reimpressão */
+        .reprint-sale {
+            position: absolute; 
+            right: 45px; /* 10px (delete) + ~30px */
+            top: 50%; 
+            transform: translateY(-50%);
+            background: none; border: none; color: var(--info);
+            cursor: pointer; font-size: 20px; opacity: 0.7;
+        }
+        .reprint-sale:hover { opacity: 1; }
+
         
         .empty-state { text-align: center; padding: 30px; color: #666; }
         
@@ -447,6 +540,14 @@
             background: white; padding: 20px; border-radius: 10px;
             width: 90%; max-width: 450px; text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-body {
+            overflow-y: auto;
+            text-align: left;
         }
         
         .password-input {
@@ -464,6 +565,50 @@
             white-space: pre-wrap;
             word-wrap: break-word;
         }
+        
+        .order-timer {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--danger);
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .open-order-items {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+        }
+        .open-order-items .cart-item {
+            padding: 8px;
+            font-size: 14px;
+        }
+        .open-order-items .item-quantity {
+            width: 20px; height: 20px; font-size: 11px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
 
         @media (max-width: 768px) {
             .tabs {
@@ -476,6 +621,13 @@
             .touch-btn {
                 font-size: 1rem;
                 height: 65px;
+            }
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            .action-buttons .touch-btn {
+                font-size: 1.1rem;
+                padding: 0 1rem;
             }
         }
 
@@ -490,7 +642,6 @@
                 padding: 10px;
             }
             .weight-controls,
-            .action-buttons,
             .quick-add-buttons,
             .login-form {
                 grid-template-columns: 1fr;
@@ -509,11 +660,13 @@
                 padding-bottom: 15px;
                 padding-top: 15px;
             }
-             .delete-sale {
+             .delete-sale, .reprint-sale { /* Ajuste para mobile */
                 top: 15px;
-                right: 5px;
                 transform: none;
             }
+            .delete-sale { right: 5px; }
+            .reprint-sale { right: 40px; }
+            
             .modal-content {
                 width: 95%;
             }
@@ -534,6 +687,10 @@
         <div class="tabs">
             <div class="tab active" data-tab="venda">🛒 <span>Venda</span></div>
             <div class="tab" data-tab="produtos">🍦 <span>Produtos</span></div>
+            <div class="tab" data-tab="comandas">
+                <span>📋</span> Comandas
+                <span class="notification-badge" id="open-orders-count" style="display: none;">0</span>
+            </div>
             <div class="tab" data-tab="historico">📜 <span>Histórico</span></div>
             <div class="tab" data-tab="admin">⚙️ <span>Administrativo</span></div>
         </div>
@@ -599,6 +756,7 @@
                 
                 <div class="action-buttons">
                     <button id="finish-sale" class="touch-btn btn-success">Finalizar Venda</button>
+                    <button id="hold-sale" class="touch-btn btn-warning">Pagamento Posterior</button>
                     <button id="cancel-sale" class="touch-btn btn-danger">Cancelar Venda</button>
                 </div>
             </div>
@@ -635,6 +793,15 @@
             </div>
         </div>
         
+        <div class="tab-content" id="comandas-tab">
+            <div class="section-card">
+                <h2 class="section-title">Comandas em Aberto</h2>
+                <div class="open-orders-grid" id="open-orders-grid">
+                    <div class="empty-state">Nenhuma comanda em aberto</div>
+                </div>
+            </div>
+        </div>
+        
         <div class="tab-content" id="historico-tab">
             <div class="section-card">
                 <h2 class="section-title">Histórico de Vendas</h2>
@@ -654,8 +821,8 @@
                 <div id="login-section">
                     <h2 class="section-title">Acesso Restrito</h2>
                     <div class="login-form">
-                        <input type="text" id="username" class="admin-input" placeholder="Usuário">
-                        <input type="password" id="password" class="admin-input" placeholder="Senha">
+                        <input type="text" id="username" class="admin-input" placeholder="Usuário" autocomplete="off">
+                        <input type="password" id="password" class="admin-input" placeholder="Senha" autocomplete="off">
                         <button id="login-btn" class="touch-btn btn-primary">Entrar</button>
                     </div>
                 </div>
@@ -746,7 +913,7 @@
     <div class="modal" id="manual-sale-modal">
         <div class="modal-content">
             <h3>Adicionar Venda Manual</h3>
-            <div id="manual-sale-form">
+            <div class="modal-body" id="manual-sale-form">
                 <div class="admin-controls" style="grid-template-columns: 1fr; text-align: left;">
                     <label for="manual-product-select">Selecionar Produto:</label>
                     <select id="manual-product-select" class="admin-input"></select>
@@ -759,7 +926,7 @@
 
                 <h4>Itens da Venda</h4>
                 <div class="cart-items" id="manual-sale-cart-items" style="max-height: 150px;">
-                    <div class="empty-state">Nenhum item adicionado</div>
+                    <div class="empty-state">Nenhum item</div>
                 </div>
                  <div class="cart-summary" id="manual-sale-summary" style="display: none;">
                     <div class="summary-row total">
@@ -782,6 +949,68 @@
         </div>
     </div>
     
+    <div class="modal" id="hold-sale-modal">
+        <div class="modal-content">
+            <h3>Pagamento Posterior</h3>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="customer-name">Nome do Cliente (para identificação)</label>
+                    <input type="text" id="customer-name" class="admin-input" placeholder="Ex: Mesa 02, João, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="existing-order-select">Adicionar a uma comanda existente?</label>
+                    <select id="existing-order-select" class="admin-input">
+                        <option value="new">Salvar como nova comanda</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="save-hold-sale-btn" class="touch-btn btn-success" style="flex: 1;">Salvar Comanda</button>
+                <button id="close-hold-sale-btn" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="open-order-modal">
+        <div class="modal-content">
+            <h3 id="open-order-title">Finalizar Comanda</h3>
+            <div class="modal-body">
+                <div class="order-timer" id="open-order-timer">Tempo em aberto: 00:00</div>
+                
+                <h4>Itens da Comanda</h4>
+                <div class="open-order-items" id="open-order-items-list">
+                </div>
+                
+                <div class="cart-summary" style="margin-top: 0;">
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="open-order-total">R$ 0,00</span>
+                    </div>
+                </div>
+                
+                <div class="payment-section" style="margin-top: 15px;">
+                    <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 10px;">Forma de Pagamento</h2>
+                    <div class="payment-options" id="open-order-payment-options">
+                        <div class="payment-option" data-method="cash"><i>💵</i><div>Dinheiro</div></div>
+                        <div class="payment-option" data-method="card"><i>💳</i><div>Cartão</div></div>
+                        <div class="payment-option" data-method="pix"><i>📱</i><div>PIX</div></div>
+                    </div>
+                    <div class="cash-input" id="open-order-cash-input">
+                        <input type="number" id="open-order-cash-received" placeholder="Valor recebido em R$">
+                        <div class="change-display" id="open-order-change-display">
+                            Troco: R$ <span id="open-order-change-amount">0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="confirm-open-order-payment" class="touch-btn btn-success" style="flex: 1;">Confirmar Pagamento</button>
+                <button id="close-open-order-btn" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="notification" class="notification"></div>
 
     <script>
@@ -791,6 +1020,7 @@
                 cart: [],
                 manualSaleCart: [],
                 salesHistory: {},
+                openOrders: [], 
                 products: [
                     { id: 1, name: "Água", price: 3.00, category: "Bebidas", image: "" }, 
                     { id: 2, name: "Água com Gás", price: 3.00, category: "Bebidas", image: "" }
@@ -804,6 +1034,9 @@
                     currentWeightedProduct: 'acai', 
                     currentPaymentMethod: null,
                     manualSalePaymentMethod: null,
+                    openOrderPaymentMethod: null, 
+                    currentOpenOrder: null, 
+                    openOrderTimerInterval: null, 
                     isAdminLoggedIn: false,
                     saleToDelete: null,
                     lastSaleForReceipt: null,
@@ -863,19 +1096,40 @@
                     newProductName: document.getElementById('new-product-name'),
                     newProductPrice: document.getElementById('new-product-price'),
                     newProductCategory: document.getElementById('new-product-category'),
+                    
+                    holdSaleButton: document.getElementById('hold-sale'),
+                    openOrdersCount: document.getElementById('open-orders-count'),
+                    openOrdersGrid: document.getElementById('open-orders-grid'),
+                    
+                    holdSaleModal: document.getElementById('hold-sale-modal'),
+                    customerNameInput: document.getElementById('customer-name'),
+                    existingOrderSelect: document.getElementById('existing-order-select'),
+                    saveHoldSaleButton: document.getElementById('save-hold-sale-btn'),
+                    closeHoldSaleButton: document.getElementById('close-hold-sale-btn'),
+                    
+                    openOrderModal: document.getElementById('open-order-modal'),
+                    openOrderTitle: document.getElementById('open-order-title'),
+                    openOrderTimer: document.getElementById('open-order-timer'),
+                    openOrderItemsList: document.getElementById('open-order-items-list'),
+                    openOrderTotal: document.getElementById('open-order-total'),
+                    openOrderPaymentOptions: document.getElementById('open-order-payment-options'),
+                    openOrderCashInput: document.getElementById('open-order-cash-input'),
+                    openOrderCashReceived: document.getElementById('open-order-cash-received'),
+                    openOrderChangeDisplay: document.getElementById('open-order-change-display'),
+                    openOrderChangeAmount: document.getElementById('open-order-change-amount'),
+                    confirmOpenOrderPaymentButton: document.getElementById('confirm-open-order-payment'),
+                    closeOpenOrderButton: document.getElementById('close-open-order-btn'),
                 };
             },
 
             bindEvents() {
                 this.DOM.weightInput.addEventListener('input', (e) => this.handlers.calculateWeightedPrice(e));
                 document.getElementById('add-to-cart').addEventListener('click', () => this.handlers.addWeightedProductToCart());
-                
                 if (this.DOM.productTypeSelector) {
                     this.DOM.productTypeSelector.querySelectorAll('.quick-add-btn').forEach(btn => {
                         btn.addEventListener('click', (e) => this.handlers.selectWeightedProduct(e.currentTarget.dataset.type));
                     });
                 }
-                
                 document.getElementById('add-new-product-btn').addEventListener('click', () => this.handlers.addNewProduct());
                 document.querySelectorAll('.quick-add-btn[data-product-id]').forEach(btn => btn.addEventListener('click', (e) => this.handlers.addQuickProduct(e)));
                 document.getElementById('finish-sale').addEventListener('click', () => this.handlers.preparePayment());
@@ -892,7 +1146,12 @@
                 document.getElementById('update-acai-price').addEventListener('click', () => this.handlers.updateAcaiPrice());
                 document.getElementById('update-sorvete-price').addEventListener('click', () => this.handlers.updateSorvetePrice());
                 document.getElementById('update-delete-password').addEventListener('click', () => this.handlers.updateDeletePassword());
-                document.getElementById('print-receipt-btn').addEventListener('click', () => this.handlers.printReceipt());
+                
+                // *** ALTERAÇÃO AQUI ***
+                // Atualizado para chamar um novo handler que usa o `lastSaleForReceipt`
+                document.getElementById('print-receipt-btn').addEventListener('click', () => this.handlers.printLastReceiptModal());
+                // *** FIM DA ALTERAÇÃO ***
+                
                 document.getElementById('close-receipt-btn').addEventListener('click', () => this.DOM.receiptModal.style.display = 'none');
                 document.getElementById('confirm-delete').addEventListener('click', () => this.handlers.confirmDeleteSale());
                 document.getElementById('cancel-delete').addEventListener('click', () => {
@@ -904,15 +1163,40 @@
                 document.getElementById('manual-add-item-btn').addEventListener('click', () => this.handlers.addManualItem());
                 document.getElementById('save-manual-sale-btn').addEventListener('click', () => this.handlers.saveManualSale());
                 document.querySelectorAll('#manual-payment-options .payment-option').forEach(el => el.addEventListener('click', () => this.handlers.selectManualPaymentMethod(el)));
-                document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => this.handlers.switchTab(t.dataset.tab)));
-                document.querySelectorAll('.admin-sub-tab').forEach(t => t.addEventListener('click', () => this.handlers.switchAdminSubTab(t.dataset.subtab)));
+                document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', (e) => this.handlers.switchTab(e.currentTarget.dataset.tab)));
+                document.querySelectorAll('.admin-sub-tab').forEach(t => t.addEventListener('click', (e) => this.handlers.switchAdminSubTab(e.currentTarget.dataset.subtab)));
                 
                 this.DOM.container.addEventListener('click', (e) => {
                     if (e.target.matches('.cart-item .btn-remove')) this.handlers.removeFromCart(e.target.dataset.index);
                     if (e.target.matches('#manual-sale-cart-items .btn-remove')) this.handlers.removeManualItem(e.target.dataset.index);
                     if (e.target.matches('.sales-history .delete-sale')) this.handlers.requestDeleteSale(e.target);
+                    
+                    // *** NOVO EVENTO ***
+                    if (e.target.matches('.sales-history .reprint-sale')) {
+                        this.handlers.reprintSale(e.target);
+                    }
+                    // *** FIM NOVO EVENTO ***
+                    
                     if (e.target.matches('.delete-product-btn')) this.handlers.deleteProduct(e.target.dataset.id);
                 });
+                
+                this.DOM.holdSaleButton.addEventListener('click', () => this.handlers.requestHoldSale());
+                this.DOM.saveHoldSaleButton.addEventListener('click', () => this.handlers.saveHoldSale());
+                this.DOM.closeHoldSaleButton.addEventListener('click', () => this.DOM.holdSaleModal.style.display = 'none');
+                
+                this.DOM.openOrdersGrid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.open-order-card');
+                    if (card) {
+                        this.handlers.openOrderDetails(parseInt(card.dataset.id));
+                    }
+                });
+                
+                this.DOM.closeOpenOrderButton.addEventListener('click', () => this.handlers.closeOpenOrderModal());
+                this.DOM.openOrderPaymentOptions.querySelectorAll('.payment-option').forEach(el => {
+                    el.addEventListener('click', () => this.handlers.selectOpenOrderPaymentMethod(el));
+                });
+                this.DOM.openOrderCashReceived.addEventListener('input', () => this.handlers.calculateOpenOrderChange());
+                this.DOM.confirmOpenOrderPaymentButton.addEventListener('click', () => this.handlers.finalizeOpenOrderPayment());
             },
 
             handlers: {
@@ -1009,7 +1293,8 @@
                         id: Date.now(), date: new Date().toLocaleString('pt-BR'), dateKey: ui.today,
                         items: [...cart], total, paymentMethod: ui.currentPaymentMethod,
                         cashReceived: ui.currentPaymentMethod === 'cash' ? (parseFloat(App.DOM.cashReceivedInput.value) || 0) : null,
-                        change: ui.currentPaymentMethod === 'cash' ? ((parseFloat(App.DOM.cashReceivedInput.value) || 0) - total) : null
+                        change: ui.currentPaymentMethod === 'cash' ? ((parseFloat(App.DOM.cashReceivedInput.value) || 0) - total) : null,
+                        openTimeMinutes: 0 
                     };
                     if (!salesHistory[ui.today]) salesHistory[ui.today] = [];
                     salesHistory[ui.today].unshift(sale);
@@ -1037,6 +1322,172 @@
                         App.utils.showNotification('Venda cancelada.', 'warning');
                     }
                 },
+                
+                // --- Handlers das Comandas ---
+                
+                requestHoldSale() {
+                    if (App.state.cart.length === 0) {
+                        return App.utils.showNotification('Carrinho vazio.', 'error');
+                    }
+                    
+                    const { existingOrderSelect } = App.DOM;
+                    existingOrderSelect.innerHTML = '<option value="new">Salvar como nova comanda</option>';
+                    App.state.openOrders.forEach(order => {
+                        const option = document.createElement('option');
+                        option.value = order.id;
+                        option.textContent = `${order.customerName} (R$ ${order.total.toFixed(2)})`;
+                        existingOrderSelect.appendChild(option);
+                    });
+                    
+                    App.DOM.customerNameInput.value = '';
+                    App.DOM.holdSaleModal.style.display = 'flex';
+                    App.DOM.customerNameInput.focus();
+                },
+                
+                saveHoldSale() {
+                    const { customerNameInput, existingOrderSelect } = App.DOM;
+                    const customerName = customerNameInput.value.trim();
+                    const selectedOrderId = existingOrderSelect.value;
+                    
+                    if (selectedOrderId === 'new' && !customerName) {
+                        return App.utils.showNotification('Digite um nome para a nova comanda.', 'error');
+                    }
+                    
+                    if (selectedOrderId === 'new') {
+                        const newOrder = {
+                            id: Date.now(),
+                            customerName: customerName,
+                            items: [...App.state.cart],
+                            total: App.state.cart.reduce((sum, item) => sum + item.totalPrice, 0),
+                            createdAt: new Date().toISOString()
+                        };
+                        App.state.openOrders.push(newOrder);
+                        App.utils.showNotification(`Nova comanda salva para "${customerName}".`, 'success');
+                    } else {
+                        const orderId = parseInt(selectedOrderId);
+                        const order = App.state.openOrders.find(o => o.id === orderId);
+                        if (order) {
+                            order.items.push(...App.state.cart);
+                            order.total = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+                            App.utils.showNotification(`Itens adicionados à comanda de "${order.customerName}".`, 'success');
+                        }
+                    }
+                    
+                    App.storage.saveOpenOrders();
+                    App.render.openOrdersGrid();
+                    App.handlers.resetSaleState();
+                    App.DOM.holdSaleModal.style.display = 'none';
+                },
+                
+                openOrderDetails(orderId) {
+                    const order = App.state.openOrders.find(o => o.id === orderId);
+                    if (!order) return;
+                    
+                    App.state.ui.currentOpenOrder = order;
+                    App.state.ui.openOrderPaymentMethod = null;
+
+                    App.DOM.openOrderTitle.textContent = `Comanda: ${order.customerName}`;
+                    App.DOM.openOrderTotal.textContent = `R$ ${order.total.toFixed(2)}`;
+                    App.DOM.openOrderCashReceived.value = '';
+                    App.DOM.openOrderChangeDisplay.style.display = 'none';
+                    App.DOM.openOrderCashInput.style.display = 'none';
+                    App.DOM.openOrderPaymentOptions.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+                    
+                    App.render.openOrderItems(order.items);
+                    
+                    if (App.state.ui.openOrderTimerInterval) {
+                        clearInterval(App.state.ui.openOrderTimerInterval);
+                    }
+                    const startTime = new Date(order.createdAt).getTime();
+                    App.state.ui.openOrderTimerInterval = setInterval(() => {
+                        App.render.openOrderTimer(startTime);
+                    }, 1000);
+                    App.render.openOrderTimer(startTime);
+                    
+                    App.DOM.openOrderModal.style.display = 'flex';
+                },
+                
+                closeOpenOrderModal() {
+                    if (App.state.ui.openOrderTimerInterval) {
+                        clearInterval(App.state.ui.openOrderTimerInterval);
+                    }
+                    App.state.ui.currentOpenOrder = null;
+                    App.state.ui.openOrderTimerInterval = null;
+                    App.DOM.openOrderModal.style.display = 'none';
+                },
+                
+                selectOpenOrderPaymentMethod(el) {
+                    App.state.ui.openOrderPaymentMethod = el.dataset.method;
+                    App.DOM.openOrderPaymentOptions.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+                    el.classList.add('selected');
+                    App.DOM.openOrderCashInput.style.display = (el.dataset.method === 'cash') ? 'block' : 'none';
+                    this.calculateOpenOrderChange();
+                },
+                
+                calculateOpenOrderChange() {
+                    const order = App.state.ui.currentOpenOrder;
+                    if (!order) return;
+                    
+                    const received = parseFloat(App.DOM.openOrderCashReceived.value) || 0;
+                    if (received >= order.total) {
+                        App.DOM.openOrderChangeAmount.textContent = (received - order.total).toFixed(2);
+                        App.DOM.openOrderChangeDisplay.style.display = 'block';
+                    } else {
+                        App.DOM.openOrderChangeDisplay.style.display = 'none';
+                    }
+                },
+                
+                finalizeOpenOrderPayment() {
+                    const { ui, salesHistory } = App.state;
+                    const order = ui.currentOpenOrder;
+                    const paymentMethod = ui.openOrderPaymentMethod;
+                    
+                    if (!order) return App.utils.showNotification('Erro: Nenhuma comanda selecionada.', 'error');
+                    if (!paymentMethod) return App.utils.showNotification('Selecione uma forma de pagamento.', 'error');
+                    
+                    let cashReceived = null;
+                    let change = null;
+                    
+                    if (paymentMethod === 'cash') {
+                        cashReceived = parseFloat(App.DOM.openOrderCashReceived.value) || 0;
+                        if (cashReceived < order.total) {
+                            return App.utils.showNotification(`Valor insuficiente.`, 'error');
+                        }
+                        change = cashReceived - order.total;
+                    }
+                    
+                    const startTime = new Date(order.createdAt).getTime();
+                    const endTime = new Date().getTime();
+                    const openTimeMinutes = (endTime - startTime) / (1000 * 60);
+                    
+                    const sale = {
+                        id: order.id, 
+                        date: new Date().toLocaleString('pt-BR'), 
+                        dateKey: ui.today,
+                        items: [...order.items], 
+                        total: order.total, 
+                        paymentMethod: paymentMethod,
+                        cashReceived: cashReceived,
+                        change: change,
+                        openTimeMinutes: openTimeMinutes 
+                    };
+                    
+                    if (!salesHistory[ui.today]) salesHistory[ui.today] = [];
+                    salesHistory[ui.today].unshift(sale);
+                    App.storage.saveSalesHistory();
+                    
+                    App.state.openOrders = App.state.openOrders.filter(o => o.id !== order.id);
+                    App.storage.saveOpenOrders();
+                    
+                    App.utils.showNotification(`Comanda de "${order.customerName}" finalizada!`, 'success');
+                    App.render.history(ui.today);
+                    App.render.openOrdersGrid();
+                    
+                    ui.lastSaleForReceipt = sale;
+                    App.utils.showReceiptModal(sale);
+                    this.closeOpenOrderModal();
+                },
+
                 login() {
                     const username = document.getElementById('username').value;
                     const password = document.getElementById('password').value;
@@ -1047,6 +1498,7 @@
                         App.state.ui.isAdminLoggedIn = true;
                         App.DOM.loginSection.style.display = 'none';
                         App.DOM.adminControlsPanel.style.display = 'block';
+                        document.getElementById('logged-user').textContent = username; 
                         App.utils.showNotification('Login realizado com sucesso.', 'success');
                     } else {
                         App.utils.showNotification('Usuário ou senha incorretos.', 'error');
@@ -1056,6 +1508,9 @@
                     App.state.ui.isAdminLoggedIn = false;
                     App.DOM.loginSection.style.display = 'block';
                     App.DOM.adminControlsPanel.style.display = 'none';
+                    
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
                 },
                 updateAcaiPrice() {
                     if(!App.state.ui.isAdminLoggedIn) return App.utils.showNotification('Acesso negado.', 'error');
@@ -1079,43 +1534,27 @@
                 },
                 addNewProduct() {
                     if (!App.state.ui.isAdminLoggedIn) return App.utils.showNotification('Acesso negado.', 'error');
-
                     const name = App.DOM.newProductName.value.trim();
                     const price = parseFloat(App.DOM.newProductPrice.value);
                     const category = App.DOM.newProductCategory.value.trim() || 'Geral';
-
                     if (!name || !price || price <= 0) {
                         return App.utils.showNotification('Por favor, preencha nome e preço válidos.', 'error');
                     }
-
-                    const newProduct = {
-                        id: Date.now(),
-                        name,
-                        price,
-                        category,
-                        image: ""
-                    };
-
+                    const newProduct = { id: Date.now(), name, price, category, image: "" };
                     App.state.products.push(newProduct);
                     App.storage.saveProducts();
-
                     App.utils.showNotification(`Produto "${name}" adicionado com sucesso!`, 'success');
-
                     App.DOM.newProductName.value = '';
                     App.DOM.newProductPrice.value = '';
                     App.DOM.newProductCategory.value = '';
-
                     App.render.products();
                     App.render.adminProducts();
                     App.render.productCategories();
                 },
-
                 deleteProduct(productId) {
                     if (!App.state.ui.isAdminLoggedIn) return App.utils.showNotification('Acesso negado.', 'error');
-
                     const idToDelete = parseInt(productId);
                     const productIndex = App.state.products.findIndex(p => p.id === idToDelete);
-
                     if (productIndex > -1) {
                         if (confirm(`Tem certeza que deseja excluir o produto "${App.state.products[productIndex].name}"?`)) {
                             const removed = App.state.products.splice(productIndex, 1)[0];
@@ -1147,15 +1586,33 @@
                     App.DOM.passwordModal.style.display = 'none';
                     App.DOM.confirmDeletePasswordInput.value = '';
                 },
+                
+                // *** NOVO HANDLER ***
+                reprintSale(target) {
+                    const id = parseInt(target.dataset.id);
+                    const date = target.dataset.date;
+                    
+                    if (!id || !date || !App.state.salesHistory[date]) {
+                        return App.utils.showNotification("Erro ao localizar venda.", "error");
+                    }
+                    
+                    const saleToReprint = App.state.salesHistory[date].find(s => s.id === id);
+                    
+                    if (saleToReprint) {
+                        App.handlers.printReceipt(saleToReprint); // Chama a impressão com a venda específica
+                    } else {
+                        App.utils.showNotification("Venda não encontrada.", "error");
+                    }
+                },
+                // *** FIM NOVO HANDLER ***
+                
                 openManualSaleModal() {
                     App.state.manualSaleCart = [];
                     App.state.ui.manualSalePaymentMethod = null;
                     App.render.manualSaleCart();
                     App.DOM.manualProductSelect.innerHTML = '<option value="">Selecione...</option><option value="acai_kg">Açaí por KG</option><option value="sorvete_kg">Sorvete por KG</option>';
                     App.state.products.forEach(p => {
-                        if (p.category !== 'Bebidas') {
-                             App.DOM.manualProductSelect.innerHTML += `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)}</option>`;
-                        }
+                        App.DOM.manualProductSelect.innerHTML += `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)}</option>`;
                     });
                     App.DOM.manualAcaiWeightSection.style.display = 'none';
                     document.querySelectorAll('#manual-payment-options .payment-option').forEach(el => el.classList.remove('selected'));
@@ -1174,10 +1631,10 @@
                         const pricePerKg = isAcai ? App.state.config.açaíPricePerKg : App.state.config.sorvetePricePerKg;
                         const name = isAcai ? "Açaí por KG" : "Sorvete por KG";
                         const price = (weight / 1000) * pricePerKg;
-                        App.state.manualSaleCart.push({ id: Date.now(), name, weightGrams: weight, totalPrice: price });
+                        App.state.manualSaleCart.push({ id: Date.now(), name, weightGrams: weight, totalPrice: price, type: 'weight' });
                     } else {
                         const product = App.state.products.find(p => p.id === parseInt(selectedId));
-                        if (product) App.state.manualSaleCart.push({ id: Date.now(), name: product.name, totalPrice: product.price });
+                        if (product) App.state.manualSaleCart.push({ id: Date.now(), name: product.name, totalPrice: product.price, type: 'product' });
                     }
                     App.render.manualSaleCart();
                 },
@@ -1197,7 +1654,8 @@
                     const total = App.state.manualSaleCart.reduce((sum, item) => sum + item.totalPrice, 0);
                     const sale = {
                         id: Date.now(), date: new Date(saleDate + 'T12:00:00').toLocaleString('pt-BR'), dateKey: saleDate,
-                        items: [...App.state.manualSaleCart], total, paymentMethod: App.state.ui.manualSalePaymentMethod
+                        items: [...App.state.manualSaleCart], total, paymentMethod: App.state.ui.manualSalePaymentMethod,
+                        openTimeMinutes: 0 
                     };
                     if (!App.state.salesHistory[saleDate]) App.state.salesHistory[saleDate] = [];
                     App.state.salesHistory[saleDate].unshift(sale);
@@ -1221,13 +1679,17 @@
                     const tableRows = [];
                     let dailyTotal = 0;
                     salesForDate.forEach(sale => {
-                        const itemsString = sale.items.map(i => {
+                        let itemsString = sale.items.map(i => {
                             const detail = i.weightGrams ? `(${i.weightGrams}g)` : '';
                             return `- ${i.name} ${detail} [R$ ${i.totalPrice.toFixed(2)}]`;
                         }).join('\n');
+                        
+                        if (sale.openTimeMinutes && sale.openTimeMinutes > 0) {
+                            itemsString += `\n(Aberta por: ${sale.openTimeMinutes.toFixed(0)} min)`;
+                        }
 
                         let paymentString = App.utils.getPaymentMethodName(sale.paymentMethod);
-                        if (sale.paymentMethod === 'cash') {
+                        if (sale.paymentMethod === 'cash' && sale.change > 0) {
                             paymentString += `\n(Troco: R$ ${sale.change.toFixed(2)})`;
                         }
 
@@ -1244,9 +1706,15 @@
                         head: [tableColumn],
                         body: tableRows,
                         startY: 30,
-                        styles: { cellPadding: 2, fontSize: 8 },
-                        headStyles: { fillColor: [138, 43, 226] },
+                        styles: { cellPadding: 2, fontSize: 8, halign: 'left', valign: 'top' },
+                        headStyles: { fillColor: [138, 43, 226], halign: 'center' },
                         alternateRowStyles: { fillColor: [245, 245, 245] },
+                        columnStyles: {
+                           0: { halign: 'center', cellWidth: 20 },
+                           1: { cellWidth: 80 },
+                           2: { halign: 'center', cellWidth: 30 },
+                           3: { halign: 'right', cellWidth: 25 }
+                        }
                     });
                     const finalY = doc.lastAutoTable.finalY;
                     doc.setFontSize(12);
@@ -1254,62 +1722,26 @@
                     doc.save(`relatorio_vendas_${date}.pdf`);
                     App.utils.showNotification('PDF gerado com sucesso!', 'success');
                 },
-                printReceipt() {
+                
+                // *** NOVO HANDLER ***
+                // Este handler é para o botão "Imprimir Recibo" do MODAL, 
+                // que sempre imprime a *última* venda finalizada.
+                printLastReceiptModal() {
                     const sale = App.state.ui.lastSaleForReceipt;
-                    if (!sale) return App.utils.showNotification("Nenhuma venda recente para imprimir.", "error");
+                    if (sale) {
+                        App.handlers.printReceipt(sale);
+                    } else {
+                        App.utils.showNotification("Nenhuma venda recente para imprimir.", "error");
+                    }
+                },
+                
+                // *** ALTERADO ***
+                // Agora aceita um objeto 'sale' para ser reutilizável
+                printReceipt(sale) {
+                    if (!sale) return App.utils.showNotification("Não foi possível encontrar a venda para imprimir.", "error");
                     
-                    // *** INÍCIO DA ALTERAÇÃO ***
-                    const printContent = `<!DOCTYPE html><html><head><title>Recibo</title><style>
-                        @page { size: 80mm auto; margin: 0; padding: 0; }
-                        body {
-                            font-family: 'Courier New', monospace;
-                            font-size: 12px;
-                            color: #000000; /* Cor preta forte */
-                            font-weight: bold; /* Texto em negrito */
-                            width: 80mm;
-                            margin: 0;
-                            padding: 5px 5px 20px 5px; /* Adiciona 20px de padding inferior */
-                            box-sizing: border-box;
-                            background: #fff;
-                        }
-                        .header { text-align: center; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dashed #000; }
-                        .header h2 { font-size: 16px; font-weight: 700; margin: 5px 0; text-transform: uppercase; }
-                        .header p { margin: 3px 0; font-size: 10px; }
-                        .item { display: flex; justify-content: space-between; margin-bottom: 4px; line-height: 1.3; }
-                        .item-name { flex-grow: 1; text-align: left; word-break: break-word; }
-                        .item-price { width: 80px; text-align: right; }
-                        .divider { border-top: 1px dashed #000; margin: 8px 0; }
-                        .total { font-weight: 700; margin-top: 8px; font-size: 14px; }
-                        .payment-info { margin: 8px 0; font-size: 10px; }
-                        .footer { text-align: center; margin-top: 10px; font-size: 9px; border-top: 1px dashed #000; padding-top: 5px; }
-                        @media print {
-                            body {
-                                margin: 0;
-                                padding: 5px 5px 20px 5px; /* Garante padding no @media print também */
-                                width: 80mm;
-                                color: #000000 !important; /* Força cor preta */
-                                font-weight: bold !important; /* Força negrito */
-                                -webkit-print-color-adjust: exact;
-                            }
-                        }
-                    </style></head><body>
-                        <div class="header"><h2>Açaí da Serra</h2><p>${new Date().toLocaleString('pt-BR')}</p></div>
-                        <div class="divider"></div>
-                        ${sale.items.map(item => `<div class="item"><span class="item-name">${item.name} ${item.weightGrams ? `(${item.weightGrams}g)` : ''}</span><span class="item-price">R$ ${item.totalPrice.toFixed(2)}</span></div>`).join('')}
-                        <div class="divider"></div>
-                        <div class="item total"><span>TOTAL:</span><span>R$ ${sale.total.toFixed(2)}</span></div>
-                        <div class="payment-info">
-                            <div class="item"><span>Pagamento:</span><span>${App.utils.getPaymentMethodName(sale.paymentMethod)}</span></div>
-                            ${sale.paymentMethod === 'cash' ? `<div class="item"><span>Recebido:</span><span>R$ ${sale.cashReceived.toFixed(2)}</span></div><div class="item"><span>Troco:</span><span>R$ ${sale.change.toFixed(2)}</span></div>` : ''}
-                        </div>
-                        <div class="footer">
-                            <p>Obrigado pela preferência!</p>
-                            <p>Volte Sempre!</p>
-                        </div>
-                        <script>window.onload=()=>{setTimeout(()=>{window.print();setTimeout(()=>window.close(),100)},100)}<\/script>
-                    </body></html>`;
-                    // *** FIM DA ALTERAÇÃO ***
-
+                    const printContent = `<!DOCTYPE html><html><head><title>Recibo</title><style>@page{size:80mm auto;margin:0;padding:0}body{font-family:'Courier New',monospace;font-size:12px;color:#000;font-weight:bold;width:80mm;margin:0;padding:5px 5px 20px 5px;box-sizing:border-box;background:#fff}.header{text-align:center;margin-bottom:8px;padding-bottom:5px;border-bottom:1px dashed #000}.header h2{font-size:16px;font-weight:700;margin:5px 0;text-transform:uppercase}.header p{margin:3px 0;font-size:10px}.item{display:flex;justify-content:space-between;margin-bottom:4px;line-height:1.3}.item-name{flex-grow:1;text-align:left;word-break:break-word}.item-price{width:80px;text-align:right}.divider{border-top:1px dashed #000;margin:8px 0}.total{font-weight:700;margin-top:8px;font-size:14px}.payment-info{margin:8px 0;font-size:10px}.footer{text-align:center;margin-top:10px;font-size:9px;border-top:1px dashed #000;padding-top:5px}@media print{body{margin:0;padding:5px 5px 20px 5px;width:80mm;color:#000!important;font-weight:bold!important;-webkit-print-color-adjust:exact}}</style></head><body><div class="header"><h2>Açaí da Serra</h2><p>${new Date().toLocaleString('pt-BR')}</p></div><div class="divider"></div>${sale.items.map(item => `<div class="item"><span class="item-name">${item.name} ${item.weightGrams ? `(${item.weightGrams}g)` : ''}</span><span class="item-price">R$ ${item.totalPrice.toFixed(2)}</span></div>`).join('')}<div class="divider"></div><div class="item total"><span>TOTAL:</span><span>R$ ${sale.total.toFixed(2)}</span></div><div class="payment-info"><div class="item"><span>Pagamento:</span><span>${App.utils.getPaymentMethodName(sale.paymentMethod)}</span></div>${sale.paymentMethod === 'cash' ? `<div class="item"><span>Recebido:</span><span>R$ ${sale.cashReceived.toFixed(2)}</span></div><div class="item"><span>Troco:</span><span>R$ ${sale.change.toFixed(2)}</span></div>` : ''}</div><div class="footer"><p>Obrigado pela preferência!</p><p>Volte Sempre!</p></div><script>window.onload=()=>{setTimeout(()=>{window.print();setTimeout(()=>window.close(),100)},100)}<\/script></body></html>`;
+                    
                     const printWindow = window.open('', '_blank');
                     printWindow.document.write(printContent);
                     printWindow.document.close();
@@ -1329,6 +1761,7 @@
                     this.products();
                     this.history(App.state.ui.today);
                     this.adminProducts();
+                    this.openOrdersGrid();
                 },
                 cart() {
                     const { cartItems, subtotal, total } = App.DOM;
@@ -1406,27 +1839,97 @@
                         
                         const itemsHtml = sale.items.map(i => {
                             const detail = i.weightGrams ? `(${i.weightGrams}g)` : '';
-                            return `<div class="sale-item-detail">- ${i.name} ${detail} ...... R$ ${i.totalPrice.toFixed(2)}</div>`;
+                            return `<div class="sale-item-detail" style="font-size: 13px;">- ${i.name} ${detail}</div>`;
                         }).join('');
-
-                        const paymentDetails = sale.paymentMethod === 'cash' 
-                            ? ` (Recebido: R$ ${sale.cashReceived.toFixed(2)}, Troco: R$ ${sale.change.toFixed(2)})`
+                        
+                        const openTimeHtml = (sale.openTimeMinutes && sale.openTimeMinutes > 0)
+                            ? `<div class="sale-open-time">(Aberta por: ${sale.openTimeMinutes.toFixed(0)} min)</div>` 
                             : '';
 
+                        const paymentDetails = sale.paymentMethod === 'cash' && sale.change > 0
+                            ? ` (Troco: R$ ${sale.change.toFixed(2)})`
+                            : '';
+
+                        // *** ALTERAÇÃO AQUI: Adicionado botão .reprint-sale ***
                         item.innerHTML = `
                             <div class="sale-info">
                                 <div class="sale-date">${sale.date}</div>
-                                <div class="sale-items">${itemsHtml}</div>
+                                <div class="sale-items">${itemsHtml}${openTimeHtml}</div>
                                 <div class="sale-payment">
                                     <span class="payment-icon">${App.utils.getPaymentIcon(sale.paymentMethod)}</span> 
                                     ${App.utils.getPaymentMethodName(sale.paymentMethod)}${paymentDetails}
                                 </div>
                             </div>
                             <div class="sale-total">R$ ${sale.total.toFixed(2)}</div>
-                            <button class="delete-sale" data-id="${sale.id}" data-date="${date}">✕</button>`;
+                            <button class="reprint-sale" data-id="${sale.id}" data-date="${date}" title="Reimprimir Recibo">🖨️</button>
+                            <button class="delete-sale" data-id="${sale.id}" data-date="${date}" title="Excluir Venda">✕</button>
+                        `;
+                        // *** FIM DA ALTERAÇÃO ***
+                        
                         App.DOM.salesHistory.appendChild(item);
                     });
                 },
+                
+                openOrdersGrid() {
+                    const { openOrdersGrid, openOrdersCount } = App.DOM;
+                    openOrdersGrid.innerHTML = '';
+                    const orders = App.state.openOrders;
+                    
+                    if (orders.length === 0) {
+                        openOrdersGrid.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">Nenhuma comanda em aberto</div>';
+                        openOrdersCount.style.display = 'none';
+                        return;
+                    }
+                    
+                    orders.forEach(order => {
+                        const card = document.createElement('div');
+                        card.className = 'open-order-card';
+                        card.dataset.id = order.id;
+                        card.innerHTML = `
+                            <div class="open-order-icon">📋</div>
+                            <div class="open-order-name">${order.customerName}</div>
+                            <div class="open-order-total">R$ ${order.total.toFixed(2)}</div>
+                        `;
+                        openOrdersGrid.appendChild(card);
+                    });
+                    
+                    openOrdersCount.textContent = orders.length;
+                    openOrdersCount.style.display = 'inline-flex';
+                },
+                
+                openOrderItems(items) {
+                    const { openOrderItemsList } = App.DOM;
+                    openOrderItemsList.innerHTML = '';
+                    if (items.length === 0) {
+                        openOrderItemsList.innerHTML = '<div class="empty-state">Nenhum item</div>';
+                        return;
+                    }
+                    items.forEach((item, index) => {
+                        const itemElement = document.createElement('div');
+                        itemElement.className = 'cart-item';
+                        const details = (item.type === "weight") ? `<div class="item-weight">${item.weightGrams}g</div>` : '';
+                        itemElement.innerHTML = `
+                            <div class="item-info">
+                                <div class="item-quantity">${index + 1}</div>
+                                <div class="item-details">
+                                    <div class="item-name">${item.name}</div>
+                                    ${details}
+                                </div>
+                            </div>
+                            <div class="item-price">R$ ${item.totalPrice.toFixed(2)}</div>
+                        `;
+                        openOrderItemsList.appendChild(itemElement);
+                    });
+                },
+                
+                openOrderTimer(startTime) {
+                    const now = new Date().getTime();
+                    const diff = now - startTime;
+                    const minutes = Math.floor(diff / 60000);
+                    const seconds = Math.floor((diff % 60000) / 1000);
+                    App.DOM.openOrderTimer.textContent = `Aberta por: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                },
+                
                 adminProducts() {
                     App.DOM.productsManagement.innerHTML = '';
                     App.state.products.forEach(product => {
@@ -1537,11 +2040,14 @@
                     const acaiPrice = localStorage.getItem('açaíPricePerKg');
                     const sorvetePrice = localStorage.getItem('sorvetePricePerKg'); 
                     const deletePassword = localStorage.getItem('deletePassword');
+                    const openOrders = localStorage.getItem('openOrders'); 
+                    
                     if(salesHistory) App.state.salesHistory = JSON.parse(salesHistory);
                     if(products) App.state.products = JSON.parse(products);
                     if(acaiPrice) App.state.config.açaíPricePerKg = parseFloat(acaiPrice);
                     if(sorvetePrice) App.state.config.sorvetePricePerKg = parseFloat(sorvetePrice);
                     if(deletePassword) App.state.config.deletePassword = deletePassword;
+                    if(openOrders) App.state.openOrders = JSON.parse(openOrders); 
                 },
                 saveSalesHistory() {
                     localStorage.setItem('salesHistory', JSON.stringify(App.state.salesHistory));
@@ -1553,6 +2059,9 @@
                 },
                  saveProducts() {
                      localStorage.setItem('products', JSON.stringify(App.state.products));
+                },
+                saveOpenOrders() { 
+                    localStorage.setItem('openOrders', JSON.stringify(App.state.openOrders));
                 }
             }
         };
