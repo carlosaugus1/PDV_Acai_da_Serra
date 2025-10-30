@@ -1,5 +1,3 @@
-Claro! Com base em todas as funcionalidades que implementamos, aqui está uma proposta de README.md completo e de fácil entendimento para o seu projeto.
-
 PDV Açaí da Serra - Touch
 Um sistema de Ponto de Venda (PDV) simples e moderno, otimizado para telas touch, focado em açaíterias e sorveterias.
 
