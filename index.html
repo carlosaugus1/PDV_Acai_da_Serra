@@ -799,7 +799,7 @@
                     <input type="text" id="delivery-customer-address" class="admin-input" placeholder="Endereço">
                     <input type="number" id="delivery-fee" class="admin-input" placeholder="Valor da Entrega (R$)" min="0" step="0.01">
                 </div>
-                </div>
+            </div>
             
             <div class="section-card payment-section">
                 <h2 class="section-title">Pagamento</h2>
@@ -1077,7 +1077,7 @@
                     openOrderPaymentMethod: null, 
                     currentOpenOrder: null, 
                     openOrderTimerInterval: null, 
-                    deliveryMode: 'balcao', // Padrão
+                    deliveryMode: 'balcao', 
                     isAdminLoggedIn: false,
                     saleToDelete: null,
                     lastSaleForReceipt: null,
@@ -1161,12 +1161,11 @@
                     confirmOpenOrderPaymentButton: document.getElementById('confirm-open-order-payment'),
                     closeOpenOrderButton: document.getElementById('close-open-order-btn'),
 
-                    // *** NOVO DOM ***
                     deliveryModeSelector: document.getElementById('delivery-mode-selector'),
                     deliveryInfoSection: document.getElementById('delivery-info-section'),
                     deliveryCustomerName: document.getElementById('delivery-customer-name'),
                     deliveryCustomerAddress: document.getElementById('delivery-customer-address'),
-                    deliveryFee: document.getElementById('delivery-fee'), // *** NOVO ***
+                    deliveryFee: document.getElementById('delivery-fee'), 
                 };
             },
 
@@ -1241,7 +1240,6 @@
                     btn.addEventListener('click', (e)=> this.handlers.selectDeliveryMode(e.currentTarget.dataset.mode));
                 });
                 
-                // *** NOVO EVENTO: Atualiza o total do carrinho ao digitar a taxa ***
                 this.DOM.deliveryFee.addEventListener('input', () => this.render.cart());
             },
 
@@ -1272,7 +1270,7 @@
                         : App.state.config.sorvetePricePerKg;
                     App.DOM.calculatedPrice.textContent = (weight / 1000 * pricePerKg).toFixed(2);
                 },
-                // *** ALTERADO: cálculo de troco agora inclui taxa de entrega ***
+                
                 calculateChange() {
                     let subtotal = App.state.cart.reduce((sum, item) => sum + item.totalPrice, 0);
                     let deliveryFee = 0;
@@ -1301,7 +1299,7 @@
 
                     const price = (weight / 1000) * pricePerKg;
                     App.state.cart.push({ id: Date.now(), name, pricePerKg, weightGrams: weight, totalPrice: price, type: "weight" });
-                    App.render.cart(); // render.cart() já recalcula o total com a taxa
+                    App.render.cart(); 
                     App.utils.showNotification(`${name} (${weight}g) adicionado.`, 'success');
                     App.DOM.weightInput.value = '';
                     App.DOM.calculatedPrice.textContent = '0.00';
@@ -1313,12 +1311,12 @@
                 },
                 addProductToCart(product) {
                     App.state.cart.push({ id: Date.now(), name: product.name, totalPrice: product.price, type: "product" });
-                    App.render.cart(); // render.cart() já recalcula o total com a taxa
+                    App.render.cart(); 
                     App.utils.showNotification(`${product.name} adicionado.`, 'success');
                 },
                 removeFromCart(index) {
                     const removed = App.state.cart.splice(index, 1)[0];
-                    App.render.cart(); // render.cart() já recalcula o total com a taxa
+                    App.render.cart(); 
                     App.utils.showNotification(`${removed.name} removido.`, 'warning');
                 },
                 preparePayment() {
@@ -1338,15 +1336,13 @@
                 selectDeliveryMode(mode) {
                     App.state.ui.deliveryMode = mode;
                     App.render.deliveryMode();
-                    App.render.cart(); // Recalcula o total (adiciona/remove taxa)
+                    App.render.cart(); 
                 },
 
-                // *** ALTERADO: confirmPayment com verificação de taxa e dados de entrega ***
                 confirmPayment() {
                     const { ui, cart, salesHistory } = App.state;
                     if (!ui.currentPaymentMethod) return App.utils.showNotification('Selecione uma forma de pagamento.', 'error');
                     
-                    // Coleta dados de entrega
                     const deliveryMode = App.state.ui.deliveryMode;
                     const customerName = App.DOM.deliveryCustomerName.value;
                     const customerAddress = App.DOM.deliveryCustomerAddress.value;
@@ -1360,7 +1356,6 @@
                         if (received < total) return App.utils.showNotification(`Valor insuficiente.`, 'error');
                     }
                     
-                    // *** NOVOS AVISOS ***
                     if (deliveryMode === 'entrega' && deliveryFee <= 0) {
                         if (!confirm('O Valor da Entrega está R$ 0,00. Deseja continuar mesmo assim?')) {
                             return; 
@@ -1371,7 +1366,6 @@
                             return; 
                         }
                     }
-                    // *** FIM DOS AVISOS ***
                     
                     const deliveryInfo = {
                         mode: deliveryMode,
@@ -1383,12 +1377,12 @@
                     const sale = {
                         id: Date.now(), date: new Date().toLocaleString('pt-BR'), dateKey: ui.today,
                         items: [...cart], 
-                        total: total, // Salva o total com a taxa
+                        total: total, 
                         paymentMethod: ui.currentPaymentMethod,
                         cashReceived: ui.currentPaymentMethod === 'cash' ? (parseFloat(App.DOM.cashReceivedInput.value) || 0) : null,
                         change: ui.currentPaymentMethod === 'cash' ? ((parseFloat(App.DOM.cashReceivedInput.value) || 0) - total) : null,
                         openTimeMinutes: 0,
-                        deliveryInfo: deliveryInfo // Salva info de entrega
+                        deliveryInfo: deliveryInfo 
                     };
                     
                     if (!salesHistory[ui.today]) salesHistory[ui.today] = [];
@@ -1404,7 +1398,6 @@
                 resetSaleState() {
                     App.state.cart = [];
                     App.state.ui.currentPaymentMethod = null;
-                    App.render.cart(); // render.cart() vai zerar subtotal e total
                     App.DOM.confirmPaymentButton.style.display = 'none';
                     App.DOM.cashInputSection.style.display = 'none';
                     App.DOM.cashReceivedInput.value = '';
@@ -1415,7 +1408,9 @@
                     App.handlers.selectDeliveryMode('balcao');
                     App.DOM.deliveryCustomerName.value = '';
                     App.DOM.deliveryCustomerAddress.value = '';
-                    App.DOM.deliveryFee.value = ''; // Limpa a taxa
+                    App.DOM.deliveryFee.value = ''; 
+                    
+                    App.render.cart(); // Chamar cart() por último para zerar os totais na UI
                 },
                 cancelSale() {
                     if (App.state.cart.length > 0 && confirm('Tem certeza que deseja cancelar a venda?')) {
@@ -1443,7 +1438,6 @@
                     App.DOM.customerNameInput.focus();
                 },
                 
-                // *** ALTERADO: saveHoldSale salva a taxa ***
                 saveHoldSale() {
                     const { customerNameInput, existingOrderSelect } = App.DOM;
                     const customerName = customerNameInput.value.trim();
@@ -1479,7 +1473,6 @@
                         const order = App.state.openOrders.find(o => o.id === orderId);
                         if (order) {
                             order.items.push(...App.state.cart);
-                            // Recalcula total da comanda (itens + taxa *existente* da comanda)
                             const itemsTotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
                             const fee = (order.deliveryInfo && order.deliveryInfo.mode === 'entrega') ? order.deliveryInfo.fee : 0;
                             order.total = itemsTotal + fee;
@@ -1507,7 +1500,7 @@
                     App.DOM.openOrderCashInput.style.display = 'none';
                     App.DOM.openOrderPaymentOptions.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
                     
-                    App.render.openOrderItems(order.items, order.deliveryInfo); // Passa info de entrega
+                    App.render.openOrderItems(order.items, order.deliveryInfo); 
                     
                     if (App.state.ui.openOrderTimerInterval) {
                         clearInterval(App.state.ui.openOrderTimerInterval);
@@ -1551,7 +1544,6 @@
                     }
                 },
                 
-                // *** ALTERADO: finalizeOpenOrderPayment com avisos ***
                 finalizeOpenOrderPayment() {
                     const { ui, salesHistory } = App.state;
                     const order = ui.currentOpenOrder;
@@ -1562,7 +1554,6 @@
                     
                     const deliveryInfo = order.deliveryInfo || { mode: 'balcao', name: '', address: '', fee: 0 };
                     
-                    // *** NOVOS AVISOS ***
                     if (deliveryInfo.mode === 'entrega' && (!deliveryInfo.fee || deliveryInfo.fee <= 0)) {
                         if (!confirm('Esta comanda de entrega está com a taxa R$ 0,00. Deseja continuar mesmo assim?')) {
                             return; 
@@ -1573,7 +1564,6 @@
                             return; 
                         }
                     }
-                    // *** FIM DOS AVISOS ***
 
                     let cashReceived = null;
                     let change = null;
@@ -1796,6 +1786,8 @@
                     App.render.history(saleDate);
                     App.DOM.manualSaleModal.style.display = 'none';
                 },
+                
+                // *** ÚNICA FUNÇÃO ALTERADA ***
                 exportHistoryToPDF() {
                     const date = App.DOM.historyDate.value;
                     const salesForDate = App.state.salesHistory[date] || [];
@@ -1809,7 +1801,13 @@
                     doc.text(`Relatório de Vendas - ${formattedDate}`, 14, 22);
                     const tableColumn = ["Hora", "Itens", "Pagamento", "Total (R$)"];
                     const tableRows = [];
-                    let dailyTotal = 0;
+                    
+                    // *** INÍCIO DA ALTERAÇÃO ***
+                    let totalGeral = 0;
+                    let totalProdutos = 0;
+                    let totalEntregas = 0;
+                    // *** FIM DA ALTERAÇÃO ***
+
                     salesForDate.forEach(sale => {
                         let itemsString = sale.items.map(i => {
                             const detail = i.weightGrams ? `(${i.weightGrams}g)` : '';
@@ -1820,11 +1818,17 @@
                             itemsString += `\n(Aberta por: ${sale.openTimeMinutes.toFixed(0)} min)`;
                         }
                         
-                        // *** ALTERADO: Adiciona info de entrega ao PDF ***
+                        // *** INÍCIO DA ALTERAÇÃO ***
+                        // Define a taxa de entrega para esta venda
+                        const taxaEntrega = (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega' && sale.deliveryInfo.fee > 0) ? sale.deliveryInfo.fee : 0;
+                        // Define o valor dos produtos (Total - Taxa)
+                        const valorProdutos = sale.total - taxaEntrega;
+
                         if (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') {
                              const fee = sale.deliveryInfo.fee ? ` (Taxa: R$ ${sale.deliveryInfo.fee.toFixed(2)})` : '';
                              itemsString += `\n(Entrega: ${sale.deliveryInfo.name || 'N/A'}${fee})`;
                         }
+                        // *** FIM DA ALTERAÇÃO ***
 
                         let paymentString = App.utils.getPaymentMethodName(sale.paymentMethod);
                         if (sale.paymentMethod === 'cash' && sale.change > 0) {
@@ -1838,8 +1842,15 @@
                             sale.total.toFixed(2)
                         ];
                         tableRows.push(saleData);
-                        dailyTotal += sale.total;
+                        
+                        // *** INÍCIO DA ALTERAÇÃO ***
+                        // Acumula os totais
+                        totalGeral += sale.total;
+                        totalProdutos += valorProdutos;
+                        totalEntregas += taxaEntrega;
+                        // *** FIM DA ALTERAÇÃO ***
                     });
+                    
                     doc.autoTable({
                         head: [tableColumn],
                         body: tableRows,
@@ -1854,12 +1865,25 @@
                            3: { halign: 'right', cellWidth: 25 }
                         }
                     });
+                    
                     const finalY = doc.lastAutoTable.finalY;
+                    
+                    // *** INÍCIO DA ALTERAÇÃO ***
+                    // Imprime os três novos totais
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Total em Produtos: R$ ${totalProdutos.toFixed(2)}`, 14, finalY + 10);
+                    doc.text(`Total em Entregas: R$ ${totalEntregas.toFixed(2)}`, 14, finalY + 15);
+                    
                     doc.setFontSize(12);
-                    doc.text(`Total do Dia: R$ ${dailyTotal.toFixed(2)}`, 14, finalY + 15);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`Total Geral (Produtos + Entregas): R$ ${totalGeral.toFixed(2)}`, 14, finalY + 22);
+                    // *** FIM DA ALTERAÇÃO ***
+
                     doc.save(`relatorio_vendas_${date}.pdf`);
                     App.utils.showNotification('PDF gerado com sucesso!', 'success');
                 },
+                // *** FIM DA FUNÇÃO ALTERADA ***
                 
                 printLastReceiptModal() {
                     const sale = App.state.ui.lastSaleForReceipt;
@@ -1870,7 +1894,6 @@
                     }
                 },
                 
-                // *** ALTERADO: printReceipt com taxa e correção de largura ***
                 printReceipt(sale) {
                     if (!sale) return App.utils.showNotification("Não foi possível encontrar a venda para imprimir.", "error");
                     
@@ -1887,7 +1910,6 @@
                         `;
                     }
                     
-                    // Ajustado para 78mm
                     const printContent = `<!DOCTYPE html><html><head><title>Recibo</title><style>
                         @page{ size: 78mm auto; margin: 0; padding: 0; }
                         body {
@@ -1959,7 +1981,6 @@
                     this.openOrdersGrid();
                     this.deliveryMode(); 
                 },
-                // *** ALTERADO: render.cart() agora adiciona taxa de entrega ao total ***
                 cart() {
                     const { cartItems, subtotal, total } = App.DOM;
                     cartItems.innerHTML = '';
@@ -1978,7 +1999,6 @@
                          cartItems.innerHTML = '<div class="empty-state">Carrinho vazio</div>';
                     }
                     
-                    // Adiciona taxa de entrega ao total
                     let deliveryFee = 0;
                     if (App.state.ui.deliveryMode === 'entrega') {
                         deliveryFee = parseFloat(App.DOM.deliveryFee.value) || 0;
@@ -2031,7 +2051,6 @@
                     }));
                 },
                 
-                // *** ALTERADO: history renderiza taxa de entrega ***
                 history(date) {
                     App.DOM.salesHistory.innerHTML = '';
                     const salesForDate = App.state.salesHistory[date] || [];
@@ -2081,7 +2100,6 @@
                     });
                 },
                 
-                // *** NOVO RENDER ***
                 deliveryMode() {
                     const mode = App.state.ui.deliveryMode;
                     App.DOM.deliveryModeSelector.querySelectorAll('.delivery-mode-btn').forEach(btn => {
@@ -2117,7 +2135,6 @@
                     openOrdersCount.style.display = 'inline-flex';
                 },
                 
-                // *** ALTERADO: openOrderItems renderiza taxa de entrega ***
                 openOrderItems(items, deliveryInfo) {
                     const { openOrderItemsList } = App.DOM;
                     openOrderItemsList.innerHTML = '';
@@ -2142,7 +2159,6 @@
                         openOrderItemsList.appendChild(itemElement);
                     });
                     
-                    // Adiciona taxa de entrega, se houver
                     if (deliveryInfo && deliveryInfo.mode === 'entrega' && deliveryInfo.fee > 0) {
                         const feeElement = document.createElement('div');
                         feeElement.className = 'cart-item';
@@ -2253,7 +2269,6 @@
                     App.DOM.notification.className = `notification ${type} show`;
                     setTimeout(() => App.DOM.notification.classList.remove('show'), 3000);
                 },
-                // *** ALTERADO: showReceiptModal com taxa ***
                 showReceiptModal: (sale) => {
                     const { receiptContent, receiptModal } = App.DOM;
                     let text = `        ** Açaí da Serra **\n--------------------------------\nData: ${sale.date}\n\n`;
