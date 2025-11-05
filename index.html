@@ -17,7 +17,7 @@
             --success: #4CAF50;
             --danger: #F44336;
             --warning: #FF9800; /* Laranja para "Pagamento Posterior" */
-            --info: #2196F3;
+            --info: #2196F3; /* Azul para "Entrega" */
             --touch-size: 70px;
             --border-radius: 12px;
         }
@@ -228,6 +228,34 @@
             background: rgba(138, 43, 226, 0.1);
         }
         
+        .delivery-mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .delivery-mode-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .delivery-mode-btn.active {
+            border-color: var(--info);
+            background: rgba(33, 150, 243, 0.1);
+        }
+        .delivery-info-section {
+            display: none; /* Oculto por padrão */
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
         .product-type-icon {
             width: 60px;
             height: 60px;
@@ -322,7 +350,7 @@
             margin-top: 10px; 
         }
         .action-buttons .touch-btn {
-            font-size: 1rem;
+            font-size: 1rem; 
             padding: 0 0.5rem;
             height: 65px;
         }
@@ -447,7 +475,7 @@
         .sales-history { max-height: 400px; overflow-y: auto; }
         
         .sale-item {
-            padding: 12px 75px 12px 12px; /* Aumentado padding-right para caber 2 botões */
+            padding: 12px 75px 12px 12px; 
             border-bottom: 1px solid #eee; display: flex;
             justify-content: space-between; align-items: center; position: relative;
         }
@@ -476,17 +504,15 @@
         }
         .delete-sale:hover { opacity: 1; }
         
-        /* NOVO: Estilo do botão de reimpressão */
         .reprint-sale {
             position: absolute; 
-            right: 45px; /* 10px (delete) + ~30px */
+            right: 45px; 
             top: 50%; 
             transform: translateY(-50%);
             background: none; border: none; color: var(--info);
             cursor: pointer; font-size: 20px; opacity: 0.7;
         }
         .reprint-sale:hover { opacity: 1; }
-
         
         .empty-state { text-align: center; padding: 30px; color: #666; }
         
@@ -643,7 +669,8 @@
             }
             .weight-controls,
             .quick-add-buttons,
-            .login-form {
+            .login-form,
+            .delivery-mode-selector { /* Empilhar no mobile */
                 grid-template-columns: 1fr;
             }
              .history-controls {
@@ -660,7 +687,7 @@
                 padding-bottom: 15px;
                 padding-top: 15px;
             }
-             .delete-sale, .reprint-sale { /* Ajuste para mobile */
+             .delete-sale, .reprint-sale { 
                 top: 15px;
                 transform: none;
             }
@@ -760,6 +787,19 @@
                     <button id="cancel-sale" class="touch-btn btn-danger">Cancelar Venda</button>
                 </div>
             </div>
+            
+            <div class="section-card">
+                <h2 class="section-title">Tipo de Venda</h2>
+                <div class="delivery-mode-selector" id="delivery-mode-selector">
+                    <button class="delivery-mode-btn active" data-mode="balcao">🏪 Balcão</button>
+                    <button class="delivery-mode-btn" data-mode="entrega">🚚 Entrega</button>
+                </div>
+                <div class="delivery-info-section" id="delivery-info-section" style="display: none;">
+                    <input type="text" id="delivery-customer-name" class="admin-input" placeholder="Nome do Cliente">
+                    <input type="text" id="delivery-customer-address" class="admin-input" placeholder="Endereço">
+                    <input type="number" id="delivery-fee" class="admin-input" placeholder="Valor da Entrega (R$)" min="0" step="0.01">
+                </div>
+                </div>
             
             <div class="section-card payment-section">
                 <h2 class="section-title">Pagamento</h2>
@@ -1037,6 +1077,7 @@
                     openOrderPaymentMethod: null, 
                     currentOpenOrder: null, 
                     openOrderTimerInterval: null, 
+                    deliveryMode: 'balcao', // Padrão
                     isAdminLoggedIn: false,
                     saleToDelete: null,
                     lastSaleForReceipt: null,
@@ -1119,6 +1160,13 @@
                     openOrderChangeAmount: document.getElementById('open-order-change-amount'),
                     confirmOpenOrderPaymentButton: document.getElementById('confirm-open-order-payment'),
                     closeOpenOrderButton: document.getElementById('close-open-order-btn'),
+
+                    // *** NOVO DOM ***
+                    deliveryModeSelector: document.getElementById('delivery-mode-selector'),
+                    deliveryInfoSection: document.getElementById('delivery-info-section'),
+                    deliveryCustomerName: document.getElementById('delivery-customer-name'),
+                    deliveryCustomerAddress: document.getElementById('delivery-customer-address'),
+                    deliveryFee: document.getElementById('delivery-fee'), // *** NOVO ***
                 };
             },
 
@@ -1146,12 +1194,7 @@
                 document.getElementById('update-acai-price').addEventListener('click', () => this.handlers.updateAcaiPrice());
                 document.getElementById('update-sorvete-price').addEventListener('click', () => this.handlers.updateSorvetePrice());
                 document.getElementById('update-delete-password').addEventListener('click', () => this.handlers.updateDeletePassword());
-                
-                // *** ALTERAÇÃO AQUI ***
-                // Atualizado para chamar um novo handler que usa o `lastSaleForReceipt`
                 document.getElementById('print-receipt-btn').addEventListener('click', () => this.handlers.printLastReceiptModal());
-                // *** FIM DA ALTERAÇÃO ***
-                
                 document.getElementById('close-receipt-btn').addEventListener('click', () => this.DOM.receiptModal.style.display = 'none');
                 document.getElementById('confirm-delete').addEventListener('click', () => this.handlers.confirmDeleteSale());
                 document.getElementById('cancel-delete').addEventListener('click', () => {
@@ -1170,13 +1213,9 @@
                     if (e.target.matches('.cart-item .btn-remove')) this.handlers.removeFromCart(e.target.dataset.index);
                     if (e.target.matches('#manual-sale-cart-items .btn-remove')) this.handlers.removeManualItem(e.target.dataset.index);
                     if (e.target.matches('.sales-history .delete-sale')) this.handlers.requestDeleteSale(e.target);
-                    
-                    // *** NOVO EVENTO ***
                     if (e.target.matches('.sales-history .reprint-sale')) {
                         this.handlers.reprintSale(e.target);
                     }
-                    // *** FIM NOVO EVENTO ***
-                    
                     if (e.target.matches('.delete-product-btn')) this.handlers.deleteProduct(e.target.dataset.id);
                 });
                 
@@ -1197,6 +1236,13 @@
                 });
                 this.DOM.openOrderCashReceived.addEventListener('input', () => this.handlers.calculateOpenOrderChange());
                 this.DOM.confirmOpenOrderPaymentButton.addEventListener('click', () => this.handlers.finalizeOpenOrderPayment());
+
+                this.DOM.deliveryModeSelector.querySelectorAll('.delivery-mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e)=> this.handlers.selectDeliveryMode(e.currentTarget.dataset.mode));
+                });
+                
+                // *** NOVO EVENTO: Atualiza o total do carrinho ao digitar a taxa ***
+                this.DOM.deliveryFee.addEventListener('input', () => this.render.cart());
             },
 
             handlers: {
@@ -1226,8 +1272,15 @@
                         : App.state.config.sorvetePricePerKg;
                     App.DOM.calculatedPrice.textContent = (weight / 1000 * pricePerKg).toFixed(2);
                 },
+                // *** ALTERADO: cálculo de troco agora inclui taxa de entrega ***
                 calculateChange() {
-                    const total = App.state.cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                    let subtotal = App.state.cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                    let deliveryFee = 0;
+                    if (App.state.ui.deliveryMode === 'entrega') {
+                        deliveryFee = parseFloat(App.DOM.deliveryFee.value) || 0;
+                    }
+                    const total = subtotal + deliveryFee;
+                    
                     const received = parseFloat(App.DOM.cashReceivedInput.value) || 0;
                     if (received >= total) {
                         App.DOM.changeAmount.textContent = (received - total).toFixed(2);
@@ -1248,7 +1301,7 @@
 
                     const price = (weight / 1000) * pricePerKg;
                     App.state.cart.push({ id: Date.now(), name, pricePerKg, weightGrams: weight, totalPrice: price, type: "weight" });
-                    App.render.cart();
+                    App.render.cart(); // render.cart() já recalcula o total com a taxa
                     App.utils.showNotification(`${name} (${weight}g) adicionado.`, 'success');
                     App.DOM.weightInput.value = '';
                     App.DOM.calculatedPrice.textContent = '0.00';
@@ -1260,12 +1313,12 @@
                 },
                 addProductToCart(product) {
                     App.state.cart.push({ id: Date.now(), name: product.name, totalPrice: product.price, type: "product" });
-                    App.render.cart();
+                    App.render.cart(); // render.cart() já recalcula o total com a taxa
                     App.utils.showNotification(`${product.name} adicionado.`, 'success');
                 },
                 removeFromCart(index) {
                     const removed = App.state.cart.splice(index, 1)[0];
-                    App.render.cart();
+                    App.render.cart(); // render.cart() já recalcula o total com a taxa
                     App.utils.showNotification(`${removed.name} removido.`, 'warning');
                 },
                 preparePayment() {
@@ -1281,21 +1334,63 @@
                     App.DOM.cashInputSection.style.display = (el.dataset.method === 'cash') ? 'block' : 'none';
                     this.calculateChange();
                 },
+
+                selectDeliveryMode(mode) {
+                    App.state.ui.deliveryMode = mode;
+                    App.render.deliveryMode();
+                    App.render.cart(); // Recalcula o total (adiciona/remove taxa)
+                },
+
+                // *** ALTERADO: confirmPayment com verificação de taxa e dados de entrega ***
                 confirmPayment() {
                     const { ui, cart, salesHistory } = App.state;
                     if (!ui.currentPaymentMethod) return App.utils.showNotification('Selecione uma forma de pagamento.', 'error');
-                    const total = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                    
+                    // Coleta dados de entrega
+                    const deliveryMode = App.state.ui.deliveryMode;
+                    const customerName = App.DOM.deliveryCustomerName.value;
+                    const customerAddress = App.DOM.deliveryCustomerAddress.value;
+                    const deliveryFee = parseFloat(App.DOM.deliveryFee.value) || 0;
+                    
+                    const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                    const total = subtotal + (deliveryMode === 'entrega' ? deliveryFee : 0);
+
                     if (ui.currentPaymentMethod === 'cash') {
                         const received = parseFloat(App.DOM.cashReceivedInput.value) || 0;
                         if (received < total) return App.utils.showNotification(`Valor insuficiente.`, 'error');
                     }
+                    
+                    // *** NOVOS AVISOS ***
+                    if (deliveryMode === 'entrega' && deliveryFee <= 0) {
+                        if (!confirm('O Valor da Entrega está R$ 0,00. Deseja continuar mesmo assim?')) {
+                            return; 
+                        }
+                    }
+                    if (deliveryMode === 'entrega' && (!customerName || !customerAddress)) {
+                        if (!confirm('O nome do cliente ou endereço não foi preenchido. Deseja continuar mesmo assim?')) {
+                            return; 
+                        }
+                    }
+                    // *** FIM DOS AVISOS ***
+                    
+                    const deliveryInfo = {
+                        mode: deliveryMode,
+                        name: customerName,
+                        address: customerAddress,
+                        fee: deliveryFee
+                    };
+                    
                     const sale = {
                         id: Date.now(), date: new Date().toLocaleString('pt-BR'), dateKey: ui.today,
-                        items: [...cart], total, paymentMethod: ui.currentPaymentMethod,
+                        items: [...cart], 
+                        total: total, // Salva o total com a taxa
+                        paymentMethod: ui.currentPaymentMethod,
                         cashReceived: ui.currentPaymentMethod === 'cash' ? (parseFloat(App.DOM.cashReceivedInput.value) || 0) : null,
                         change: ui.currentPaymentMethod === 'cash' ? ((parseFloat(App.DOM.cashReceivedInput.value) || 0) - total) : null,
-                        openTimeMinutes: 0 
+                        openTimeMinutes: 0,
+                        deliveryInfo: deliveryInfo // Salva info de entrega
                     };
+                    
                     if (!salesHistory[ui.today]) salesHistory[ui.today] = [];
                     salesHistory[ui.today].unshift(sale);
                     App.storage.saveSalesHistory();
@@ -1305,25 +1400,29 @@
                     App.utils.showReceiptModal(sale);
                     this.resetSaleState();
                 },
+
                 resetSaleState() {
                     App.state.cart = [];
                     App.state.ui.currentPaymentMethod = null;
-                    App.render.cart();
+                    App.render.cart(); // render.cart() vai zerar subtotal e total
                     App.DOM.confirmPaymentButton.style.display = 'none';
                     App.DOM.cashInputSection.style.display = 'none';
                     App.DOM.cashReceivedInput.value = '';
                     App.DOM.changeDisplay.style.display = 'none';
                     App.DOM.changeAmount.textContent = '0,00';
                     document.querySelectorAll('#venda-tab .payment-option').forEach(el => el.classList.remove('selected'));
+                    
+                    App.handlers.selectDeliveryMode('balcao');
+                    App.DOM.deliveryCustomerName.value = '';
+                    App.DOM.deliveryCustomerAddress.value = '';
+                    App.DOM.deliveryFee.value = ''; // Limpa a taxa
                 },
                 cancelSale() {
                     if (App.state.cart.length > 0 && confirm('Tem certeza que deseja cancelar a venda?')) {
-                        this.resetSaleState();
+                        this.resetSaleState(); 
                         App.utils.showNotification('Venda cancelada.', 'warning');
                     }
                 },
-                
-                // --- Handlers das Comandas ---
                 
                 requestHoldSale() {
                     if (App.state.cart.length === 0) {
@@ -1339,11 +1438,12 @@
                         existingOrderSelect.appendChild(option);
                     });
                     
-                    App.DOM.customerNameInput.value = '';
+                    App.DOM.customerNameInput.value = App.DOM.deliveryCustomerName.value;
                     App.DOM.holdSaleModal.style.display = 'flex';
                     App.DOM.customerNameInput.focus();
                 },
                 
+                // *** ALTERADO: saveHoldSale salva a taxa ***
                 saveHoldSale() {
                     const { customerNameInput, existingOrderSelect } = App.DOM;
                     const customerName = customerNameInput.value.trim();
@@ -1353,13 +1453,24 @@
                         return App.utils.showNotification('Digite um nome para a nova comanda.', 'error');
                     }
                     
+                    const deliveryInfo = {
+                        mode: App.state.ui.deliveryMode,
+                        name: App.DOM.deliveryCustomerName.value,
+                        address: App.DOM.deliveryCustomerAddress.value,
+                        fee: parseFloat(App.DOM.deliveryFee.value) || 0
+                    };
+                    
                     if (selectedOrderId === 'new') {
+                        const subtotal = App.state.cart.reduce((sum, item) => sum + item.totalPrice, 0);
+                        const total = subtotal + (deliveryInfo.mode === 'entrega' ? deliveryInfo.fee : 0);
+
                         const newOrder = {
                             id: Date.now(),
                             customerName: customerName,
                             items: [...App.state.cart],
-                            total: App.state.cart.reduce((sum, item) => sum + item.totalPrice, 0),
-                            createdAt: new Date().toISOString()
+                            total: total,
+                            createdAt: new Date().toISOString(),
+                            deliveryInfo: deliveryInfo 
                         };
                         App.state.openOrders.push(newOrder);
                         App.utils.showNotification(`Nova comanda salva para "${customerName}".`, 'success');
@@ -1368,7 +1479,10 @@
                         const order = App.state.openOrders.find(o => o.id === orderId);
                         if (order) {
                             order.items.push(...App.state.cart);
-                            order.total = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+                            // Recalcula total da comanda (itens + taxa *existente* da comanda)
+                            const itemsTotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+                            const fee = (order.deliveryInfo && order.deliveryInfo.mode === 'entrega') ? order.deliveryInfo.fee : 0;
+                            order.total = itemsTotal + fee;
                             App.utils.showNotification(`Itens adicionados à comanda de "${order.customerName}".`, 'success');
                         }
                     }
@@ -1393,7 +1507,7 @@
                     App.DOM.openOrderCashInput.style.display = 'none';
                     App.DOM.openOrderPaymentOptions.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
                     
-                    App.render.openOrderItems(order.items);
+                    App.render.openOrderItems(order.items, order.deliveryInfo); // Passa info de entrega
                     
                     if (App.state.ui.openOrderTimerInterval) {
                         clearInterval(App.state.ui.openOrderTimerInterval);
@@ -1437,6 +1551,7 @@
                     }
                 },
                 
+                // *** ALTERADO: finalizeOpenOrderPayment com avisos ***
                 finalizeOpenOrderPayment() {
                     const { ui, salesHistory } = App.state;
                     const order = ui.currentOpenOrder;
@@ -1445,6 +1560,21 @@
                     if (!order) return App.utils.showNotification('Erro: Nenhuma comanda selecionada.', 'error');
                     if (!paymentMethod) return App.utils.showNotification('Selecione uma forma de pagamento.', 'error');
                     
+                    const deliveryInfo = order.deliveryInfo || { mode: 'balcao', name: '', address: '', fee: 0 };
+                    
+                    // *** NOVOS AVISOS ***
+                    if (deliveryInfo.mode === 'entrega' && (!deliveryInfo.fee || deliveryInfo.fee <= 0)) {
+                        if (!confirm('Esta comanda de entrega está com a taxa R$ 0,00. Deseja continuar mesmo assim?')) {
+                            return; 
+                        }
+                    }
+                    if (deliveryInfo.mode === 'entrega' && (!deliveryInfo.name || !deliveryInfo.address)) {
+                         if (!confirm('Esta comanda de entrega não tem nome ou endereço. Deseja continuar mesmo assim?')) {
+                            return; 
+                        }
+                    }
+                    // *** FIM DOS AVISOS ***
+
                     let cashReceived = null;
                     let change = null;
                     
@@ -1469,7 +1599,8 @@
                         paymentMethod: paymentMethod,
                         cashReceived: cashReceived,
                         change: change,
-                        openTimeMinutes: openTimeMinutes 
+                        openTimeMinutes: openTimeMinutes,
+                        deliveryInfo: deliveryInfo 
                     };
                     
                     if (!salesHistory[ui.today]) salesHistory[ui.today] = [];
@@ -1587,7 +1718,6 @@
                     App.DOM.confirmDeletePasswordInput.value = '';
                 },
                 
-                // *** NOVO HANDLER ***
                 reprintSale(target) {
                     const id = parseInt(target.dataset.id);
                     const date = target.dataset.date;
@@ -1599,12 +1729,11 @@
                     const saleToReprint = App.state.salesHistory[date].find(s => s.id === id);
                     
                     if (saleToReprint) {
-                        App.handlers.printReceipt(saleToReprint); // Chama a impressão com a venda específica
+                        App.handlers.printReceipt(saleToReprint);
                     } else {
                         App.utils.showNotification("Venda não encontrada.", "error");
                     }
                 },
-                // *** FIM NOVO HANDLER ***
                 
                 openManualSaleModal() {
                     App.state.manualSaleCart = [];
@@ -1652,11 +1781,14 @@
                     if (App.state.manualSaleCart.length === 0) return App.utils.showNotification('Adicione itens à venda.', 'error');
                     if (!App.state.ui.manualSalePaymentMethod) return App.utils.showNotification('Selecione um método de pagamento.', 'error');
                     const total = App.state.manualSaleCart.reduce((sum, item) => sum + item.totalPrice, 0);
+                    
                     const sale = {
                         id: Date.now(), date: new Date(saleDate + 'T12:00:00').toLocaleString('pt-BR'), dateKey: saleDate,
                         items: [...App.state.manualSaleCart], total, paymentMethod: App.state.ui.manualSalePaymentMethod,
-                        openTimeMinutes: 0 
+                        openTimeMinutes: 0,
+                        deliveryInfo: { mode: 'balcao', name: '', address: '', fee: 0 } 
                     };
+                    
                     if (!App.state.salesHistory[saleDate]) App.state.salesHistory[saleDate] = [];
                     App.state.salesHistory[saleDate].unshift(sale);
                     App.storage.saveSalesHistory();
@@ -1686,6 +1818,12 @@
                         
                         if (sale.openTimeMinutes && sale.openTimeMinutes > 0) {
                             itemsString += `\n(Aberta por: ${sale.openTimeMinutes.toFixed(0)} min)`;
+                        }
+                        
+                        // *** ALTERADO: Adiciona info de entrega ao PDF ***
+                        if (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') {
+                             const fee = sale.deliveryInfo.fee ? ` (Taxa: R$ ${sale.deliveryInfo.fee.toFixed(2)})` : '';
+                             itemsString += `\n(Entrega: ${sale.deliveryInfo.name || 'N/A'}${fee})`;
                         }
 
                         let paymentString = App.utils.getPaymentMethodName(sale.paymentMethod);
@@ -1723,9 +1861,6 @@
                     App.utils.showNotification('PDF gerado com sucesso!', 'success');
                 },
                 
-                // *** NOVO HANDLER ***
-                // Este handler é para o botão "Imprimir Recibo" do MODAL, 
-                // que sempre imprime a *última* venda finalizada.
                 printLastReceiptModal() {
                     const sale = App.state.ui.lastSaleForReceipt;
                     if (sale) {
@@ -1735,12 +1870,72 @@
                     }
                 },
                 
-                // *** ALTERADO ***
-                // Agora aceita um objeto 'sale' para ser reutilizável
+                // *** ALTERADO: printReceipt com taxa e correção de largura ***
                 printReceipt(sale) {
                     if (!sale) return App.utils.showNotification("Não foi possível encontrar a venda para imprimir.", "error");
                     
-                    const printContent = `<!DOCTYPE html><html><head><title>Recibo</title><style>@page{size:80mm auto;margin:0;padding:0}body{font-family:'Courier New',monospace;font-size:12px;color:#000;font-weight:bold;width:80mm;margin:0;padding:5px 5px 20px 5px;box-sizing:border-box;background:#fff}.header{text-align:center;margin-bottom:8px;padding-bottom:5px;border-bottom:1px dashed #000}.header h2{font-size:16px;font-weight:700;margin:5px 0;text-transform:uppercase}.header p{margin:3px 0;font-size:10px}.item{display:flex;justify-content:space-between;margin-bottom:4px;line-height:1.3}.item-name{flex-grow:1;text-align:left;word-break:break-word}.item-price{width:80px;text-align:right}.divider{border-top:1px dashed #000;margin:8px 0}.total{font-weight:700;margin-top:8px;font-size:14px}.payment-info{margin:8px 0;font-size:10px}.footer{text-align:center;margin-top:10px;font-size:9px;border-top:1px dashed #000;padding-top:5px}@media print{body{margin:0;padding:5px 5px 20px 5px;width:80mm;color:#000!important;font-weight:bold!important;-webkit-print-color-adjust:exact}}</style></head><body><div class="header"><h2>Açaí da Serra</h2><p>${new Date().toLocaleString('pt-BR')}</p></div><div class="divider"></div>${sale.items.map(item => `<div class="item"><span class="item-name">${item.name} ${item.weightGrams ? `(${item.weightGrams}g)` : ''}</span><span class="item-price">R$ ${item.totalPrice.toFixed(2)}</span></div>`).join('')}<div class="divider"></div><div class="item total"><span>TOTAL:</span><span>R$ ${sale.total.toFixed(2)}</span></div><div class="payment-info"><div class="item"><span>Pagamento:</span><span>${App.utils.getPaymentMethodName(sale.paymentMethod)}</span></div>${sale.paymentMethod === 'cash' ? `<div class="item"><span>Recebido:</span><span>R$ ${sale.cashReceived.toFixed(2)}</span></div><div class="item"><span>Troco:</span><span>R$ ${sale.change.toFixed(2)}</span></div>` : ''}</div><div class="footer"><p>Obrigado pela preferência!</p><p>Volte Sempre!</p></div><script>window.onload=()=>{setTimeout(()=>{window.print();setTimeout(()=>window.close(),100)},100)}<\/script></body></html>`;
+                    let deliveryHtml = '';
+                    const fee = (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega' && sale.deliveryInfo.fee > 0) ? sale.deliveryInfo.fee : 0;
+                    const feeHtml = fee > 0 ? `<div class="item"><span class="item-name">Taxa Entrega</span><span class="item-price">R$ ${fee.toFixed(2)}</span></div>` : '';
+
+                    if (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') {
+                        deliveryHtml = `
+                            <div class="divider"></div>
+                            <div class="item" style="text-align: center; display: block; margin-bottom: 5px;"><strong>*** ENTREGA ***</strong></div>
+                            ${sale.deliveryInfo.name ? `<div class="item"><span>Cliente:</span><span style="text-align:right;">${sale.deliveryInfo.name}</span></div>` : ''}
+                            ${sale.deliveryInfo.address ? `<div class="item"><span>Endereço:</span><span style="text-align:right;">${sale.deliveryInfo.address}</span></div>` : ''}
+                        `;
+                    }
+                    
+                    // Ajustado para 78mm
+                    const printContent = `<!DOCTYPE html><html><head><title>Recibo</title><style>
+                        @page{ size: 78mm auto; margin: 0; padding: 0; }
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            color: #000;
+                            font-weight: bold;
+                            width: 78mm; 
+                            margin: 0;
+                            padding: 5px 5px 20px 5px;
+                            box-sizing: border-box;
+                            background: #fff;
+                        }
+                        .header{text-align:center;margin-bottom:8px;padding-bottom:5px;border-bottom:1px dashed #000}
+                        .header h2{font-size:16px;font-weight:700;margin:5px 0;text-transform:uppercase}
+                        .header p{margin:3px 0;font-size:10px}
+                        .item{display:flex;justify-content:space-between;margin-bottom:4px;line-height:1.3}
+                        .item-name{flex-grow:1;text-align:left;word-break:break-word}
+                        .item-price{width:80px;text-align:right;flex-shrink:0;}
+                        .divider{border-top:1px dashed #000;margin:8px 0}
+                        .total{font-weight:700;margin-top:8px;font-size:14px}
+                        .payment-info{margin:8px 0;font-size:10px}
+                        .footer{text-align:center;margin-top:10px;font-size:9px;border-top:1px dashed #000;padding-top:5px}
+                        @media print{
+                            body {
+                                margin: 0;
+                                padding: 5px 5px 20px 5px;
+                                width: 78mm; 
+                                color: #000 !important;
+                                font-weight: bold !important;
+                                -webkit-print-color-adjust: exact;
+                            }
+                        }
+                        </style></head><body>
+                        <div class="header"><h2>Açaí da Serra</h2><p>${new Date().toLocaleString('pt-BR')}</p></div>
+                        ${deliveryHtml} 
+                        <div class="divider"></div>
+                        ${sale.items.map(item => `<div class="item"><span class="item-name">${item.name} ${item.weightGrams ? `(${item.weightGrams}g)` : ''}</span><span class="item-price">R$ ${item.totalPrice.toFixed(2)}</span></div>`).join('')}
+                        ${feeHtml}
+                        <div class="divider"></div>
+                        <div class="item total"><span>TOTAL:</span><span>R$ ${sale.total.toFixed(2)}</span></div>
+                        <div class="payment-info">
+                            <div class="item"><span>Pagamento:</span><span>${App.utils.getPaymentMethodName(sale.paymentMethod)}</span></div>
+                            ${sale.paymentMethod === 'cash' ? `<div class="item"><span>Recebido:</span><span>R$ ${sale.cashReceived.toFixed(2)}</span></div><div class="item"><span>Troco:</span><span>R$ ${sale.change.toFixed(2)}</span></div>` : ''}
+                        </div>
+                        <div class="footer"><p>Obrigado pela preferência!</p><p>Volte Sempre!</p></div>
+                        <script>window.onload=()=>{setTimeout(()=>{window.print();setTimeout(()=>window.close(),100)},100)}<\/script>
+                    </body></html>`;
                     
                     const printWindow = window.open('', '_blank');
                     printWindow.document.write(printContent);
@@ -1762,27 +1957,36 @@
                     this.history(App.state.ui.today);
                     this.adminProducts();
                     this.openOrdersGrid();
+                    this.deliveryMode(); 
                 },
+                // *** ALTERADO: render.cart() agora adiciona taxa de entrega ao total ***
                 cart() {
                     const { cartItems, subtotal, total } = App.DOM;
                     cartItems.innerHTML = '';
-                    if (App.state.cart.length === 0) {
-                        cartItems.innerHTML = '<div class="empty-state">Carrinho vazio</div>';
-                        subtotal.textContent = 'R$ 0,00';
-                        total.textContent = 'R$ 0,00';
-                        return;
-                    }
+                    
                     let currentSubtotal = 0;
-                    App.state.cart.forEach((item, index) => {
-                        currentSubtotal += item.totalPrice;
-                        const itemElement = document.createElement('div');
-                        itemElement.className = 'cart-item';
-                        const details = (item.type === "weight") ? `<div class="item-weight">${item.weightGrams}g</div>` : '';
-                        itemElement.innerHTML = `<div class="item-info"><div class="item-quantity">${index + 1}</div><div class="item-details"><div class="item-name">${item.name}</div>${details}</div></div><div class="item-price">R$ ${item.totalPrice.toFixed(2)}</div><div class="item-actions"><button class="btn-small btn-remove" data-index="${index}">✕</button></div>`;
-                        cartItems.appendChild(itemElement);
-                    });
+                    if (App.state.cart.length > 0) {
+                        App.state.cart.forEach((item, index) => {
+                            currentSubtotal += item.totalPrice;
+                            const itemElement = document.createElement('div');
+                            itemElement.className = 'cart-item';
+                            const details = (item.type === "weight") ? `<div class="item-weight">${item.weightGrams}g</div>` : '';
+                            itemElement.innerHTML = `<div class="item-info"><div class="item-quantity">${index + 1}</div><div class="item-details"><div class="item-name">${item.name}</div>${details}</div></div><div class="item-price">R$ ${item.totalPrice.toFixed(2)}</div><div class="item-actions"><button class="btn-small btn-remove" data-index="${index}">✕</button></div>`;
+                            cartItems.appendChild(itemElement);
+                        });
+                    } else {
+                         cartItems.innerHTML = '<div class="empty-state">Carrinho vazio</div>';
+                    }
+                    
+                    // Adiciona taxa de entrega ao total
+                    let deliveryFee = 0;
+                    if (App.state.ui.deliveryMode === 'entrega') {
+                        deliveryFee = parseFloat(App.DOM.deliveryFee.value) || 0;
+                    }
+                    const currentTotal = currentSubtotal + deliveryFee;
+                    
                     subtotal.textContent = `R$ ${currentSubtotal.toFixed(2)}`;
-                    total.textContent = `R$ ${currentSubtotal.toFixed(2)}`;
+                    total.textContent = `R$ ${currentTotal.toFixed(2)}`;
                 },
                 products() {
                     const searchTerm = App.DOM.productSearch.value.toLowerCase();
@@ -1826,6 +2030,8 @@
                         this.products();
                     }));
                 },
+                
+                // *** ALTERADO: history renderiza taxa de entrega ***
                 history(date) {
                     App.DOM.salesHistory.innerHTML = '';
                     const salesForDate = App.state.salesHistory[date] || [];
@@ -1845,16 +2051,22 @@
                         const openTimeHtml = (sale.openTimeMinutes && sale.openTimeMinutes > 0)
                             ? `<div class="sale-open-time">(Aberta por: ${sale.openTimeMinutes.toFixed(0)} min)</div>` 
                             : '';
+                        
+                        let deliveryHtml = '';
+                        if (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') {
+                            const name = sale.deliveryInfo.name ? ` (${sale.deliveryInfo.name})` : '';
+                            const fee = sale.deliveryInfo.fee ? ` (Taxa: R$ ${sale.deliveryInfo.fee.toFixed(2)})` : '';
+                            deliveryHtml = `<div class="sale-open-time" style="color: var(--info); font-weight: bold;">🚚 Entrega${name}${fee}</div>`;
+                        }
 
                         const paymentDetails = sale.paymentMethod === 'cash' && sale.change > 0
                             ? ` (Troco: R$ ${sale.change.toFixed(2)})`
                             : '';
 
-                        // *** ALTERAÇÃO AQUI: Adicionado botão .reprint-sale ***
                         item.innerHTML = `
                             <div class="sale-info">
                                 <div class="sale-date">${sale.date}</div>
-                                <div class="sale-items">${itemsHtml}${openTimeHtml}</div>
+                                <div class="sale-items">${itemsHtml}${openTimeHtml}${deliveryHtml}</div>
                                 <div class="sale-payment">
                                     <span class="payment-icon">${App.utils.getPaymentIcon(sale.paymentMethod)}</span> 
                                     ${App.utils.getPaymentMethodName(sale.paymentMethod)}${paymentDetails}
@@ -1864,10 +2076,18 @@
                             <button class="reprint-sale" data-id="${sale.id}" data-date="${date}" title="Reimprimir Recibo">🖨️</button>
                             <button class="delete-sale" data-id="${sale.id}" data-date="${date}" title="Excluir Venda">✕</button>
                         `;
-                        // *** FIM DA ALTERAÇÃO ***
                         
                         App.DOM.salesHistory.appendChild(item);
                     });
+                },
+                
+                // *** NOVO RENDER ***
+                deliveryMode() {
+                    const mode = App.state.ui.deliveryMode;
+                    App.DOM.deliveryModeSelector.querySelectorAll('.delivery-mode-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.mode === mode);
+                    });
+                    App.DOM.deliveryInfoSection.style.display = (mode === 'entrega') ? 'grid' : 'none';
                 },
                 
                 openOrdersGrid() {
@@ -1897,7 +2117,8 @@
                     openOrdersCount.style.display = 'inline-flex';
                 },
                 
-                openOrderItems(items) {
+                // *** ALTERADO: openOrderItems renderiza taxa de entrega ***
+                openOrderItems(items, deliveryInfo) {
                     const { openOrderItemsList } = App.DOM;
                     openOrderItemsList.innerHTML = '';
                     if (items.length === 0) {
@@ -1920,6 +2141,22 @@
                         `;
                         openOrderItemsList.appendChild(itemElement);
                     });
+                    
+                    // Adiciona taxa de entrega, se houver
+                    if (deliveryInfo && deliveryInfo.mode === 'entrega' && deliveryInfo.fee > 0) {
+                        const feeElement = document.createElement('div');
+                        feeElement.className = 'cart-item';
+                        feeElement.innerHTML = `
+                            <div class="item-info">
+                                <div class="item-quantity"></div>
+                                <div class="item-details">
+                                    <div class="item-name" style="font-weight: bold;">Taxa Entrega</div>
+                                </div>
+                            </div>
+                            <div class="item-price" style="font-weight: bold;">R$ ${deliveryInfo.fee.toFixed(2)}</div>
+                        `;
+                        openOrderItemsList.appendChild(feeElement);
+                    }
                 },
                 
                 openOrderTimer(startTime) {
@@ -2016,13 +2253,30 @@
                     App.DOM.notification.className = `notification ${type} show`;
                     setTimeout(() => App.DOM.notification.classList.remove('show'), 3000);
                 },
+                // *** ALTERADO: showReceiptModal com taxa ***
                 showReceiptModal: (sale) => {
                     const { receiptContent, receiptModal } = App.DOM;
-                    let text = `        ** Açaí da Serra **\n--------------------------------\nData: ${sale.date}\n\nItens:\n`;
+                    let text = `        ** Açaí da Serra **\n--------------------------------\nData: ${sale.date}\n\n`;
+                    
+                    const fee = (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') ? sale.deliveryInfo.fee : 0;
+                    
+                    if (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') {
+                        text += `         *** ENTREGA ***\n`;
+                        if(sale.deliveryInfo.name) text += `Cliente: ${sale.deliveryInfo.name}\n`;
+                        if(sale.deliveryInfo.address) text += `Endereço: ${sale.deliveryInfo.address}\n`;
+                        text += `--------------------------------\n`;
+                    }
+                    
+                    text += `Itens:\n`;
                     sale.items.forEach(item => {
                         text += `${item.name.padEnd(20)}R$ ${item.totalPrice.toFixed(2).padStart(7)}\n`;
                         if (item.type === 'weight') text += `  (${item.weightGrams}g)\n`;
                     });
+                    
+                    if (fee > 0) {
+                        text += `Taxa Entrega:`.padEnd(20) + `R$ ${fee.toFixed(2).padStart(7)}\n`;
+                    }
+                    
                     text += `--------------------------------\nTOTAL:`.padEnd(22) + `R$ ${sale.total.toFixed(2).padStart(7)}\n`;
                     text += `Pagamento: ${App.utils.getPaymentMethodName(sale.paymentMethod)}\n`;
                     if (sale.paymentMethod === 'cash') text += `Recebido: R$ ${sale.cashReceived.toFixed(2)}\nTroco: R$ ${sale.change.toFixed(2)}\n`;
