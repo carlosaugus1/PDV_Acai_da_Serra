@@ -853,7 +853,22 @@
                 <div class="sales-history" id="sales-history">
                     <div class="empty-state">Nenhuma venda para esta data</div>
                 </div>
-            </div>
+                
+                <div class="cart-summary" id="history-summary" style="margin-top: 15px; display: none;">
+                    <div class="summary-row">
+                        <span>Total em Produtos:</span>
+                        <span id="history-products-total">R$ 0,00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total em Entregas:</span>
+                        <span id="history-delivery-total">R$ 0,00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total Geral do Dia:</span>
+                        <span id="history-grand-total">R$ 0,00</span>
+                    </div>
+                </div>
+                </div>
         </div>
         
         <div class="tab-content" id="admin-tab">
@@ -1116,6 +1131,14 @@
                     productsGrid: document.getElementById('products-grid'),
                     historyDate: document.getElementById('history-date'),
                     salesHistory: document.getElementById('sales-history'),
+                    
+                    // *** INÍCIO DA ALTERAÇÃO ***
+                    historySummary: document.getElementById('history-summary'),
+                    historyProductsTotal: document.getElementById('history-products-total'),
+                    historyDeliveryTotal: document.getElementById('history-delivery-total'),
+                    historyGrandTotal: document.getElementById('history-grand-total'),
+                    // *** FIM DA ALTERAÇÃO ***
+
                     loginSection: document.getElementById('login-section'),
                     adminControlsPanel: document.getElementById('admin-controls-panel'),
                     acaiPriceInput: document.getElementById('acai-price'),
@@ -1410,7 +1433,7 @@
                     App.DOM.deliveryCustomerAddress.value = '';
                     App.DOM.deliveryFee.value = ''; 
                     
-                    App.render.cart(); // Chamar cart() por último para zerar os totais na UI
+                    App.render.cart(); 
                 },
                 cancelSale() {
                     if (App.state.cart.length > 0 && confirm('Tem certeza que deseja cancelar a venda?')) {
@@ -1787,7 +1810,6 @@
                     App.DOM.manualSaleModal.style.display = 'none';
                 },
                 
-                // *** ÚNICA FUNÇÃO ALTERADA ***
                 exportHistoryToPDF() {
                     const date = App.DOM.historyDate.value;
                     const salesForDate = App.state.salesHistory[date] || [];
@@ -1819,9 +1841,7 @@
                         }
                         
                         // *** INÍCIO DA ALTERAÇÃO ***
-                        // Define a taxa de entrega para esta venda
                         const taxaEntrega = (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega' && sale.deliveryInfo.fee > 0) ? sale.deliveryInfo.fee : 0;
-                        // Define o valor dos produtos (Total - Taxa)
                         const valorProdutos = sale.total - taxaEntrega;
 
                         if (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega') {
@@ -1844,7 +1864,6 @@
                         tableRows.push(saleData);
                         
                         // *** INÍCIO DA ALTERAÇÃO ***
-                        // Acumula os totais
                         totalGeral += sale.total;
                         totalProdutos += valorProdutos;
                         totalEntregas += taxaEntrega;
@@ -1869,7 +1888,6 @@
                     const finalY = doc.lastAutoTable.finalY;
                     
                     // *** INÍCIO DA ALTERAÇÃO ***
-                    // Imprime os três novos totais
                     doc.setFontSize(10);
                     doc.setFont(undefined, 'normal');
                     doc.text(`Total em Produtos: R$ ${totalProdutos.toFixed(2)}`, 14, finalY + 10);
@@ -1883,7 +1901,6 @@
                     doc.save(`relatorio_vendas_${date}.pdf`);
                     App.utils.showNotification('PDF gerado com sucesso!', 'success');
                 },
-                // *** FIM DA FUNÇÃO ALTERADA ***
                 
                 printLastReceiptModal() {
                     const sale = App.state.ui.lastSaleForReceipt;
@@ -2051,16 +2068,38 @@
                     }));
                 },
                 
+                // *** FUNÇÃO ALTERADA ***
                 history(date) {
                     App.DOM.salesHistory.innerHTML = '';
+                    
+                    // Pega os elementos do DOM do sumário
+                    const { salesHistory, historySummary, historyProductsTotal, historyDeliveryTotal, historyGrandTotal } = App.DOM;
+                    
                     const salesForDate = App.state.salesHistory[date] || [];
+                    
+                    // Zera os contadores
+                    let totalGeral = 0;
+                    let totalProdutos = 0;
+                    let totalEntregas = 0;
+
                     if (salesForDate.length === 0) {
-                        App.DOM.salesHistory.innerHTML = '<div class="empty-state">Nenhuma venda para esta data</div>';
+                        salesHistory.innerHTML = '<div class="empty-state">Nenhuma venda para esta data</div>';
+                        historySummary.style.display = 'none'; // Esconde o sumário
                         return;
                     }
+
                     salesForDate.forEach(sale => {
                         const item = document.createElement('div');
                         item.className = 'sale-item';
+                        
+                        // Cálculos para o sumário
+                        const taxaEntrega = (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega' && sale.deliveryInfo.fee > 0) ? sale.deliveryInfo.fee : 0;
+                        const valorProdutos = sale.total - taxaEntrega;
+                        
+                        totalGeral += sale.total;
+                        totalProdutos += valorProdutos;
+                        totalEntregas += taxaEntrega;
+                        // Fim dos cálculos
                         
                         const itemsHtml = sale.items.map(i => {
                             const detail = i.weightGrams ? `(${i.weightGrams}g)` : '';
@@ -2096,9 +2135,16 @@
                             <button class="delete-sale" data-id="${sale.id}" data-date="${date}" title="Excluir Venda">✕</button>
                         `;
                         
-                        App.DOM.salesHistory.appendChild(item);
+                        salesHistory.appendChild(item);
                     });
+
+                    // Renderiza os totais no sumário e o exibe
+                    historyProductsTotal.textContent = `R$ ${totalProdutos.toFixed(2)}`;
+                    historyDeliveryTotal.textContent = `R$ ${totalEntregas.toFixed(2)}`;
+                    historyGrandTotal.textContent = `R$ ${totalGeral.toFixed(2)}`;
+                    historySummary.style.display = 'block';
                 },
+                // *** FIM DA FUNÇÃO ALTERADA ***
                 
                 deliveryMode() {
                     const mode = App.state.ui.deliveryMode;
