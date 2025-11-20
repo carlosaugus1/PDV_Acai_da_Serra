@@ -36,6 +36,16 @@
         
         <!-- Conteúdo da Aba: Venda -->
         <div class="tab-content active" id="venda-tab">
+            
+            <!-- BALÃO DE DESCONTO (NOVO) -->
+            <div id="discount-balloon" class="discount-balloon" style="display: none;">
+                <span class="discount-icon">🏷️</span>
+                <div class="discount-text">
+                    <span class="discount-title">PROMOÇÃO ATIVA!</span>
+                    <span id="discount-details">10% OFF em Açaí</span>
+                </div>
+            </div>
+
             <div class="section-card">
                 <h2 class="section-title">
                     <span>Venda por KG</span>
@@ -68,12 +78,7 @@
                 </div>
 
                 <div class="quick-add-buttons">
-                    <button class="quick-add-btn" data-product-id="1">
-                        Água <span class="price">R$ 3,00</span>
-                    </button>
-                    <button class="quick-add-btn" data-product-id="2">
-                        Água com Gás <span class="price">R$ 3,00</span>
-                    </button>
+                    <!-- Botões gerados via JS -->
                 </div>
             </div>
             
@@ -157,7 +162,7 @@
             </div>
         </div>
         
-        <!-- Conteúdo da Aba: Histórico (Sumário Modificado) -->
+        <!-- Conteúdo da Aba: Histórico -->
         <div class="tab-content" id="historico-tab">
             <div class="section-card">
                 <h2 class="section-title">Histórico de Vendas</h2>
@@ -170,7 +175,6 @@
                     <div class="empty-state">Nenhuma venda para esta data</div>
                 </div>
                 
-                <!-- SUMÁRIO DO HISTÓRICO MODIFICADO -->
                 <div class="cart-summary" id="history-summary" style="margin-top: 15px; display: none;">
                     <div class="summary-row">
                         <span>Total em Produtos:</span>
@@ -180,7 +184,6 @@
                         <span>Total em Entregas:</span>
                         <span id="history-delivery-total">R$ 0,00</span>
                     </div>
-                    <!-- NOVA LINHA DE DESPESAS -->
                     <div class="summary-row" style="color: var(--danger);">
                         <span>Total em Despesas:</span>
                         <span id="history-expenses-total">R$ 0,00</span>
@@ -190,10 +193,10 @@
                         <span id="history-grand-total">R$ 0,00</span>
                     </div>
                 </div>
-                </div>
+            </div>
         </div>
         
-        <!-- NOVO CONTEÚDO DA ABA: Despesas -->
+        <!-- Aba: Despesas -->
         <div class="tab-content" id="despesas-tab">
             <div class="section-card">
                 <h2 class="section-title">Registrar Nova Despesa</h2>
@@ -221,8 +224,45 @@
             </div>
         </div>
 
-        <!-- Conteúdo da Aba: Administrativo (Novas seções) -->
+        <!-- Conteúdo da Aba: Administrativo -->
         <div class="tab-content" id="admin-tab">
+            
+            <!-- NOVA SEÇÃO DE DESCONTOS (Antes do login) -->
+            <div class="section-card discount-section">
+                <h2 class="section-title">Gerenciar Promoções</h2>
+                <div class="discount-controls-container">
+                    <div class="discount-toggle-row">
+                        <label class="switch">
+                            <input type="checkbox" id="discount-active-check">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="toggle-label">Ativar Desconto</span>
+                    </div>
+                    
+                    <div id="discount-config-area" class="discount-config-area disabled">
+                        <div class="admin-controls">
+                            <label>Porcentagem (%):</label>
+                            <input type="number" id="discount-percentage" class="admin-input" value="10" min="1" max="100">
+                        </div>
+                        
+                        <div class="discount-targets">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="discount-target-acai">
+                                <span class="checkmark"></span>
+                                Aplicar no Açaí
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="discount-target-sorvete">
+                                <span class="checkmark"></span>
+                                Aplicar no Sorvete
+                            </label>
+                        </div>
+                        <button id="save-discount-config" class="touch-btn btn-primary" style="width: 100%; height: 45px; margin-top: 10px;">Salvar Configuração</button>
+                    </div>
+                </div>
+            </div>
+            <!-- FIM SEÇÃO DE DESCONTOS -->
+
             <div class="section-card">
                 <div id="login-section">
                     <h2 class="section-title">Acesso Restrito</h2>
@@ -239,14 +279,12 @@
                          <button id="logout-btn" class="touch-btn btn-secondary" style="height: auto; padding: 10px 15px;">Sair</button>
                     </div>
                     
-                    <!-- NOVAS SUB-ABAS (INCLUINDO RELATÓRIOS) -->
                     <div class="admin-sub-tabs">
                         <div class="admin-sub-tab active" data-subtab="produtos">Produtos e Preços</div>
                         <div class="admin-sub-tab" data-subtab="relatorios">Relatórios</div>
                         <div class="admin-sub-tab" data-subtab="config">Configurações</div>
                     </div>
 
-                    <!-- Conteúdo Sub-aba: Produtos -->
                     <div class="admin-sub-content active" id="admin-produtos-content">
                         <div class="admin-section">
                             <h3>Preço por KG</h3>
@@ -277,7 +315,6 @@
                         </div>
                     </div>
                     
-                    <!-- NOVO CONTEÚDO SUB-ABA: RELATÓRIOS -->
                     <div class="admin-sub-content" id="admin-relatorios-content">
                         <div class="admin-section">
                             <h3>Relatório Mensal</h3>
@@ -289,7 +326,6 @@
                         </div>
                     </div>
 
-                    <!-- Conteúdo Sub-aba: Configurações -->
                     <div class="admin-sub-content" id="admin-config-content">
                         <div class="admin-section">
                             <h3>Senha de Exclusão</h3>
@@ -299,17 +335,13 @@
                             </div>
                              <button id="update-delete-password" class="touch-btn btn-primary" style="width:100%;">Atualizar Senha</button>
                         </div>
-                         <div class="admin-section">
-                            <h3>Usuários e Permissões</h3>
-                            <p class="empty-state" style="padding:10px;">(Área para futuras configurações de usuários)</p>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Modais (sem alteração estrutural) -->
+    <!-- Modais -->
     <div class="modal" id="password-modal">
         <div class="modal-content">
             <h3>Excluir Item</h3>
