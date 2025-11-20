@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cart: [],
             manualSaleCart: [],
             salesHistory: {},
-            expenses: {}, // NOVO: Estado para despesas
+            expenses: {}, 
             openOrders: [], 
             products: [
                 { id: 1, name: "Água", price: 3.00, category: "Bebidas", image: "" }, 
@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 açaíPricePerKg: 43.90,
                 sorvetePricePerKg: 43.90, 
                 deletePassword: '1015',
+            },
+            // NOVO: Estado para controle de descontos
+            discount: {
+                active: false,
+                percentage: 10,
+                targets: {
+                    acai: false,
+                    sorvete: false
+                }
             },
             ui: {
                 currentWeightedProduct: 'acai', 
@@ -25,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deliveryMode: 'balcao', 
                 isAdminLoggedIn: false,
                 saleToDelete: null,
-                expenseToDelete: null, // NOVO: Para exclusão de despesa
+                expenseToDelete: null,
                 lastSaleForReceipt: null,
                 today: new Date().toISOString().split('T')[0],
             }
@@ -36,8 +45,28 @@ document.addEventListener('DOMContentLoaded', () => {
         init() {
             this.cacheDOM();
             this.storage.load();
+            this.checkThursdayDiscount(); // NOVO: Verifica se é quinta-feira
             this.bindEvents();
             this.render.all();
+            this.render.discountControls(); // NOVO
+            this.render.activeDiscountIndicator(); // NOVO
+        },
+
+        // NOVO: Lógica de Quinta-feira
+        checkThursdayDiscount() {
+            const today = new Date();
+            const isThursday = today.getDay() === 4; // 0=Dom, 1=Seg, ..., 4=Qui
+            
+            // Se for quinta-feira, ativa o desconto no Açaí por padrão (se não houver config manual salva hoje)
+            // Para simplificar: Toda vez que abrir o app numa quinta, sugere o desconto.
+            if (isThursday) {
+                // Você pode optar por forçar ou apenas sugerir. Vamos forçar por padrão como solicitado.
+                // Verificamos se o usuário já mexeu na config hoje (opcional), mas para este requisito:
+                this.state.discount.active = true;
+                this.state.discount.percentage = 10;
+                this.state.discount.targets.acai = true;
+                // Mantém sorvete como estava ou false
+            }
         },
 
         cacheDOM() {
@@ -63,13 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyDate: document.getElementById('history-date'),
                 salesHistory: document.getElementById('sales-history'),
                 
-                // *** MUDANÇA NO SUMÁRIO DO HISTÓRICO ***
                 historySummary: document.getElementById('history-summary'),
                 historyProductsTotal: document.getElementById('history-products-total'),
                 historyDeliveryTotal: document.getElementById('history-delivery-total'),
-                historyExpensesTotal: document.getElementById('history-expenses-total'), // NOVO
+                historyExpensesTotal: document.getElementById('history-expenses-total'),
                 historyGrandTotal: document.getElementById('history-grand-total'),
-                // *** FIM DA MUDANÇA ***
 
                 loginSection: document.getElementById('login-section'),
                 adminControlsPanel: document.getElementById('admin-controls-panel'),
@@ -122,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 deliveryCustomerAddress: document.getElementById('delivery-customer-address'),
                 deliveryFee: document.getElementById('delivery-fee'),
 
-                // NOVO: DOM para Despesas
                 expenseDate: document.getElementById('expense-date'),
                 newExpenseName: document.getElementById('new-expense-name'),
                 newExpenseDesc: document.getElementById('new-expense-desc'),
@@ -132,9 +158,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 expensesSummary: document.getElementById('expenses-summary'),
                 expensesTotalToday: document.getElementById('expenses-total-today'),
 
-                // NOVO: DOM para Relatório Mensal
                 reportMonthSelect: document.getElementById('report-month-select'),
                 generateMonthlyReportPdfBtn: document.getElementById('generate-monthly-report-pdf'),
+
+                // NOVO: DOM para Descontos
+                discountActiveCheck: document.getElementById('discount-active-check'),
+                discountConfigArea: document.getElementById('discount-config-area'),
+                discountPercentageInput: document.getElementById('discount-percentage'),
+                discountTargetAcai: document.getElementById('discount-target-acai'),
+                discountTargetSorvete: document.getElementById('discount-target-sorvete'),
+                saveDiscountConfigBtn: document.getElementById('save-discount-config'),
+                discountBalloon: document.getElementById('discount-balloon'),
+                discountDetails: document.getElementById('discount-details'),
             };
         },
 
@@ -165,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('update-delete-password').addEventListener('click', () => this.handlers.updateDeletePassword());
             document.getElementById('print-receipt-btn').addEventListener('click', () => this.handlers.printLastReceiptModal());
             document.getElementById('close-receipt-btn').addEventListener('click', () => this.DOM.receiptModal.style.display = 'none');
-            document.getElementById('confirm-delete').addEventListener('click', () => this.handlers.confirmDelete()); // MODIFICADO: Função genérica de deleção
+            document.getElementById('confirm-delete').addEventListener('click', () => this.handlers.confirmDelete()); 
             document.getElementById('cancel-delete').addEventListener('click', () => {
                 this.DOM.passwordModal.style.display = 'none';
                 this.DOM.confirmDeletePasswordInput.value = '';
@@ -178,15 +213,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', (e) => this.handlers.switchTab(e.currentTarget.dataset.tab)));
             document.querySelectorAll('.admin-sub-tab').forEach(t => t.addEventListener('click', (e) => this.handlers.switchAdminSubTab(e.currentTarget.dataset.subtab)));
             
-            // Eventos de clique no container (delegados)
             this.DOM.container.addEventListener('click', (e) => {
                 if (e.target.matches('.cart-item .btn-remove')) this.handlers.removeFromCart(e.target.dataset.index);
                 if (e.target.matches('#manual-sale-cart-items .btn-remove')) this.handlers.removeManualItem(e.target.dataset.index);
-                // MODIFICADO: Deleção de venda
                 if (e.target.matches('.sales-history .delete-sale')) this.handlers.requestDeleteSale(e.target);
-                // NOVO: Deleção de despesa
                 if (e.target.matches('.expenses-history-list .delete-expense')) this.handlers.requestDeleteExpense(e.target);
-                
                 if (e.target.matches('.sales-history .reprint-sale')) {
                     this.handlers.reprintSale(e.target);
                 }
@@ -216,13 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             this.DOM.deliveryFee.addEventListener('input', () => this.render.cart());
-
-            // NOVO: Eventos para Despesas
             this.DOM.addNewExpenseBtn.addEventListener('click', () => this.handlers.addNewExpense());
             this.DOM.expenseDate.addEventListener('change', (e) => this.render.expenses(e.target.value));
-            
-            // NOVO: Evento para Relatório Mensal
             this.DOM.generateMonthlyReportPdfBtn.addEventListener('click', () => this.handlers.exportMonthlyReportToPDF());
+
+            // NOVO: Eventos de Desconto
+            this.DOM.discountActiveCheck.addEventListener('change', (e) => this.handlers.toggleDiscountConfig(e));
+            this.DOM.saveDiscountConfigBtn.addEventListener('click', () => this.handlers.saveDiscountConfig());
         },
 
         handlers: {
@@ -232,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 document.getElementById(`${tabName}-tab`).classList.add('active');
                 
-                // NOVO: Atualiza a lista de despesas ao mudar para a aba
                 if (tabName === 'despesas') {
                     App.DOM.expenseDate.value = App.state.ui.today;
                     App.render.expenses(App.state.ui.today);
@@ -244,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   document.querySelectorAll('.admin-sub-content').forEach(c => c.classList.remove('active'));
                   document.getElementById(`admin-${subTabName}-content`).classList.add('active');
                   
-                  // NOVO: Define o valor padrão do seletor de mês
                   if (subTabName === 'relatorios') {
                       if (!App.DOM.reportMonthSelect.value) {
                           const today = new Date();
@@ -254,6 +283,43 @@ document.addEventListener('DOMContentLoaded', () => {
                       }
                   }
             },
+            
+            // NOVO: Handlers de Desconto
+            toggleDiscountConfig(e) {
+                const isActive = e.target.checked;
+                if (isActive) {
+                    App.DOM.discountConfigArea.classList.remove('disabled');
+                } else {
+                    App.DOM.discountConfigArea.classList.add('disabled');
+                }
+
+                // Atualiza o estado e a UI imediatamente
+                App.state.discount.active = isActive;
+                App.render.activeDiscountIndicator();
+            },
+            saveDiscountConfig() {
+                const isActive = App.DOM.discountActiveCheck.checked;
+                const percentage = parseFloat(App.DOM.discountPercentageInput.value);
+                const acaiTarget = App.DOM.discountTargetAcai.checked;
+                const sorveteTarget = App.DOM.discountTargetSorvete.checked;
+
+                if (isActive && !percentage) {
+                    return App.utils.showNotification('Defina uma porcentagem válida.', 'error');
+                }
+
+                App.state.discount = {
+                    active: isActive,
+                    percentage: percentage || 0,
+                    targets: {
+                        acai: acaiTarget,
+                        sorvete: sorveteTarget
+                    }
+                };
+
+                App.render.activeDiscountIndicator();
+                App.utils.showNotification(isActive ? 'Promoção ativada!' : 'Promoção desativada.', 'success');
+            },
+
             selectWeightedProduct(type) {
                 App.state.ui.currentWeightedProduct = type;
                 App.render.weightedProductSelector();
@@ -266,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pricePerKg = App.state.ui.currentWeightedProduct === 'acai'
                     ? App.state.config.açaíPricePerKg
                     : App.state.config.sorvetePricePerKg;
+                // Nota: Mostramos o valor "base" aqui. O desconto é calculado ao adicionar.
                 App.DOM.calculatedPrice.textContent = (weight / 1000 * pricePerKg).toFixed(2);
             },
             
@@ -285,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     App.DOM.changeDisplay.style.display = 'none';
                 }
             },
+            // MODIFICADO: Adiciona produto com cálculo de desconto
             addWeightedProductToCart() {
                 const weight = parseFloat(App.DOM.weightInput.value);
                 if (!weight || weight <= 0) return App.utils.showNotification('Digite um peso válido.', 'error');
@@ -295,10 +363,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     : App.state.config.sorvetePricePerKg;
                 const name = type === 'acai' ? 'Açaí por KG' : 'Sorvete por KG';
 
-                const price = (weight / 1000) * pricePerKg;
-                App.state.cart.push({ id: Date.now(), name, pricePerKg, weightGrams: weight, totalPrice: price, type: "weight" });
+                let finalPrice = (weight / 1000) * pricePerKg;
+                let originalPrice = null;
+                let discountInfo = null;
+
+                // Lógica de Desconto
+                const { discount } = App.state;
+                if (discount.active) {
+                    const isAcaiTarget = type === 'acai' && discount.targets.acai;
+                    const isSorveteTarget = type === 'sorvete' && discount.targets.sorvete;
+
+                    if (isAcaiTarget || isSorveteTarget) {
+                        originalPrice = finalPrice;
+                        const discountAmount = (finalPrice * discount.percentage) / 100;
+                        finalPrice = finalPrice - discountAmount;
+                        discountInfo = {
+                            percentage: discount.percentage,
+                            amount: discountAmount
+                        };
+                    }
+                }
+
+                App.state.cart.push({ 
+                    id: Date.now(), 
+                    name, 
+                    pricePerKg, 
+                    weightGrams: weight, 
+                    totalPrice: finalPrice, 
+                    originalPrice: originalPrice, // Salva preço original se houve desconto
+                    discountInfo: discountInfo,
+                    type: "weight" 
+                });
+
                 App.render.cart(); 
-                App.utils.showNotification(`${name} (${weight}g) adicionado.`, 'success');
+                const msg = discountInfo ? `${name} adicionado com ${discount.percentage}% OFF!` : `${name} adicionado.`;
+                App.utils.showNotification(msg, 'success');
                 App.DOM.weightInput.value = '';
                 App.DOM.calculatedPrice.textContent = '0.00';
             },
@@ -308,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (product) this.addProductToCart(product);
             },
             addProductToCart(product) {
+                // Produtos fixos (água) não têm desconto nessa regra, mas se tivessem, seria aqui.
                 App.state.cart.push({ id: Date.now(), name: product.name, totalPrice: product.price, type: "product" });
                 App.render.cart(); 
                 App.utils.showNotification(`${product.name} adicionado.`, 'success');
@@ -387,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 salesHistory[ui.today].unshift(sale);
                 App.storage.saveSalesHistory();
                 App.utils.showNotification(`Venda finalizada!`, 'success');
-                App.render.history(ui.today); // Atualiza o histórico
+                App.render.history(ui.today); 
                 ui.lastSaleForReceipt = sale;
                 App.utils.showReceiptModal(sale);
                 this.resetSaleState();
@@ -599,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.storage.saveOpenOrders();
                 
                 App.utils.showNotification(`Comanda de "${order.customerName}" finalizada!`, 'success');
-                App.render.history(ui.today); // Atualiza o histórico
+                App.render.history(ui.today); 
                 App.render.openOrdersGrid();
                 
                 ui.lastSaleForReceipt = sale;
@@ -686,7 +786,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             
-            // NOVO: Handler para adicionar despesa
             addNewExpense() {
                 const name = App.DOM.newExpenseName.value.trim();
                 const description = App.DOM.newExpenseDesc.value.trim();
@@ -714,36 +813,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 App.utils.showNotification('Despesa adicionada com sucesso!', 'success');
                 
-                // Limpa os campos
                 App.DOM.newExpenseName.value = '';
                 App.DOM.newExpenseDesc.value = '';
                 App.DOM.newExpenseValue.value = '';
                 
-                // Atualiza as listas
                 App.DOM.expenseDate.value = dateKey;
                 App.render.expenses(dateKey);
-                App.render.history(App.DOM.historyDate.value); // Atualiza o histórico de vendas tbm
+                App.render.history(App.DOM.historyDate.value); 
             },
             
-            // MODIFICADO: Função genérica para pedir senha
             requestDeleteSale(target) {
                 App.state.ui.saleToDelete = { id: parseInt(target.dataset.id), date: target.dataset.date };
-                App.state.ui.expenseToDelete = null; // Garante que só um será deletado
+                App.state.ui.expenseToDelete = null; 
                 App.DOM.passwordModal.querySelector('h3').textContent = 'Excluir Venda';
                 App.DOM.passwordModal.style.display = 'flex';
                 App.DOM.confirmDeletePasswordInput.focus();
             },
             
-            // NOVO: Pedir senha para excluir despesa
             requestDeleteExpense(target) {
                 App.state.ui.expenseToDelete = { id: parseInt(target.dataset.id), date: target.dataset.date };
-                App.state.ui.saleToDelete = null; // Garante que só um será deletado
+                App.state.ui.saleToDelete = null; 
                 App.DOM.passwordModal.querySelector('h3').textContent = 'Excluir Despesa';
                 App.DOM.passwordModal.style.display = 'flex';
                 App.DOM.confirmDeletePasswordInput.focus();
             },
 
-            // MODIFICADO: Função genérica que confirma a deleção
             confirmDelete() {
                 if (App.DOM.confirmDeletePasswordInput.value !== App.state.config.deletePassword) {
                     App.utils.showNotification('Senha incorreta.', 'error');
@@ -752,7 +846,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 
-                // Se for para deletar Venda
                 if (App.state.ui.saleToDelete) {
                     const {id, date} = App.state.ui.saleToDelete;
                     const saleIndex = App.state.salesHistory[date].findIndex(s => s.id === id);
@@ -763,20 +856,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         App.utils.showNotification('Venda excluída.', 'success');
                     }
                 }
-                // Se for para deletar Despesa
                 else if (App.state.ui.expenseToDelete) {
                     const {id, date} = App.state.ui.expenseToDelete;
                     const expenseIndex = App.state.expenses[date].findIndex(e => e.id === id);
                     if (expenseIndex > -1) {
                         App.state.expenses[date].splice(expenseIndex, 1);
                         App.storage.saveExpenses();
-                        App.render.expenses(date); // Re-renderiza a lista de despesas
-                        App.render.history(App.DOM.historyDate.value); // Re-renderiza o histórico (para atualizar o saldo)
+                        App.render.expenses(date); 
+                        App.render.history(App.DOM.historyDate.value); 
                         App.utils.showNotification('Despesa excluída.', 'success');
                     }
                 }
                 
-                // Limpa tudo
                 App.DOM.passwordModal.style.display = 'none';
                 App.DOM.confirmDeletePasswordInput.value = '';
                 App.state.ui.saleToDelete = null;
@@ -862,13 +953,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.DOM.manualSaleModal.style.display = 'none';
             },
             
-            // MODIFICADO: Exporta apenas o dia selecionado, incluindo despesas
             exportHistoryToPDF() {
                 const date = App.DOM.historyDate.value;
                 const salesForDate = App.state.salesHistory[date] || [];
-                const expensesForDate = App.state.expenses[date] || []; // NOVO
+                const expensesForDate = App.state.expenses[date] || []; 
                 
-                if (salesForDate.length === 0 && expensesForDate.length === 0) { // MODIFICADO
+                if (salesForDate.length === 0 && expensesForDate.length === 0) { 
                     return App.utils.showNotification('Nenhuma venda ou despesa para exportar nesta data.', 'warning');
                 }
                 
@@ -884,9 +974,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let totalGeral = 0;
                 let totalProdutos = 0;
                 let totalEntregas = 0;
-                let totalDespesas = 0; // NOVO
+                let totalDespesas = 0; 
                 
-                // Tabela de Vendas
                 if (salesForDate.length > 0) {
                     doc.setFontSize(14);
                     doc.text('Vendas do Dia', 14, finalY);
@@ -948,7 +1037,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     finalY = doc.lastAutoTable.finalY;
                 }
                 
-                // NOVO: Tabela de Despesas
                 if (expensesForDate.length > 0) {
                     finalY += 10;
                     doc.setFontSize(14);
@@ -973,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: expenseTableRows,
                         startY: finalY,
                         styles: { cellPadding: 2, fontSize: 8, halign: 'left', valign: 'top' },
-                        headStyles: { fillColor: [220, 53, 69], halign: 'center' }, // Cor vermelha
+                        headStyles: { fillColor: [220, 53, 69], halign: 'center' }, 
                         alternateRowStyles: { fillColor: [245, 245, 245] },
                         columnStyles: {
                            0: { halign: 'center', cellWidth: 20 },
@@ -985,16 +1073,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     finalY = doc.lastAutoTable.finalY;
                 }
                 
-                // NOVO: Sumário Final
                 finalY += 10;
                 doc.setFontSize(10);
                 doc.setFont(undefined, 'normal');
                 doc.text(`Total em Produtos: R$ ${totalProdutos.toFixed(2)}`, 14, finalY);
                 doc.text(`Total em Entregas: R$ ${totalEntregas.toFixed(2)}`, 14, finalY + 5);
                 
-                doc.setTextColor(220, 53, 69); // Vermelho
+                doc.setTextColor(220, 53, 69); 
                 doc.text(`Total em Despesas: R$ ${totalDespesas.toFixed(2)}`, 14, finalY + 10);
-                doc.setTextColor(0, 0, 0); // Preto
+                doc.setTextColor(0, 0, 0); 
                 
                 const saldoDia = (totalGeral - totalDespesas);
                 doc.setFontSize(12);
@@ -1005,16 +1092,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.utils.showNotification('PDF diário gerado com sucesso!', 'success');
             },
             
-            // NOVO: Handler para exportar relatório mensal
             exportMonthlyReportToPDF() {
-                const monthYear = App.DOM.reportMonthSelect.value; // Ex: "2023-11"
+                const monthYear = App.DOM.reportMonthSelect.value; 
                 if (!monthYear) {
                     return App.utils.showNotification('Selecione um mês válido.', 'error');
                 }
                 
                 const [year, month] = monthYear.split('-');
                 
-                // 1. Coletar todos os dados do mês
                 const allSales = [];
                 const allExpenses = [];
                 
@@ -1034,7 +1119,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return App.utils.showNotification('Nenhum dado encontrado para este mês.', 'warning');
                 }
 
-                // 2. Calcular totais
                 let totalVendas = 0;
                 let totalEntregas = 0;
                 let totalProdutos = 0;
@@ -1058,7 +1142,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const saldoMes = totalVendas - totalDespesas;
                 
-                // 3. Gerar o PDF
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 const formattedMonth = new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
@@ -1068,7 +1151,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.text(`Relatório Mensal - ${formattedMonth}`, 14, finalY);
                 finalY += 10;
                 
-                // --- Seção de Resumo Geral ---
                 doc.setFontSize(14);
                 doc.text('Resumo Geral do Mês', 14, finalY);
                 finalY += 8;
@@ -1080,9 +1162,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 finalY += 6;
                 
                 doc.text(`Total em Despesas:`, 14, finalY);
-                doc.setTextColor(220, 53, 69); // Vermelho
+                doc.setTextColor(220, 53, 69); 
                 doc.text(`- R$ ${totalDespesas.toFixed(2)}`, 150, finalY, { align: 'right' });
-                doc.setTextColor(0, 0, 0); // Preto
+                doc.setTextColor(0, 0, 0); 
                 finalY += 6;
                 
                 doc.setFont(undefined, 'bold');
@@ -1090,7 +1172,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.text(`R$ ${saldoMes.toFixed(2)}`, 150, finalY, { align: 'right' });
                 finalY += 10;
                 
-                // --- Seção de Detalhes de Vendas ---
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
                 doc.text('Detalhes de Vendas', 14, finalY);
@@ -1118,7 +1199,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.text(`R$ ${pagamentos.pix.toFixed(2)}`, 150, finalY, { align: 'right' });
                 finalY += 10;
 
-                // --- Seção de Lista de Despesas ---
                 if (allExpenses.length > 0) {
                     doc.setFontSize(12);
                     doc.setFont(undefined, 'bold');
@@ -1128,7 +1208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const expenseTableColumn = ["Data", "Nome", "Descrição", "Valor (R$)"];
                     const expenseTableRows = [];
                     
-                    // Ordena as despesas por data
                     allExpenses.sort((a, b) => new Date(a.dateKey + 'T' + a.date.split(' ')[1]) - new Date(b.dateKey + 'T' + b.date.split(' ')[1]));
                     
                     allExpenses.forEach(expense => {
@@ -1145,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: expenseTableRows,
                         startY: finalY,
                         styles: { cellPadding: 2, fontSize: 8, halign: 'left', valign: 'top' },
-                        headStyles: { fillColor: [220, 53, 69], halign: 'center' }, // Cor vermelha
+                        headStyles: { fillColor: [220, 53, 69], halign: 'center' }, 
                         alternateRowStyles: { fillColor: [245, 245, 245] },
                         columnStyles: {
                            0: { halign: 'center', cellWidth: 25 },
@@ -1170,6 +1249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             
+            // MODIFICADO: Recibo com suporte a desconto
             printReceipt(sale) {
                 if (!sale) return App.utils.showNotification("Não foi possível encontrar a venda para imprimir.", "error");
                 
@@ -1204,7 +1284,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     .header p{margin:3px 0;font-size:10px}
                     .item{display:flex;justify-content:space-between;margin-bottom:4px;line-height:1.3}
                     .item-name{flex-grow:1;text-align:left;word-break:break-word}
-                    .item-price{width:80px;text-align:right;flex-shrink:0;}
+                    .item-price{width:80px;text-align:right;flex-shrink:0; display:flex; flex-direction:column;}
+                    .discount-tag{font-size:9px; font-style:italic;}
+                    .old-price-print{text-decoration: line-through; font-size: 10px;}
                     .divider{border-top:1px dashed #000;margin:8px 0}
                     .total{font-weight:700;margin-top:8px;font-size:14px}
                     .payment-info{margin:8px 0;font-size:10px}
@@ -1223,7 +1305,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="header"><h2>Açaí da Serra</h2><p>${new Date().toLocaleString('pt-BR')}</p></div>
                     ${deliveryHtml} 
                     <div class="divider"></div>
-                    ${sale.items.map(item => `<div class="item"><span class="item-name">${item.name} ${item.weightGrams ? `(${item.weightGrams}g)` : ''}</span><span class="item-price">R$ ${item.totalPrice.toFixed(2)}</span></div>`).join('')}
+                    ${sale.items.map(item => {
+                        let priceHtml = `<span>R$ ${item.totalPrice.toFixed(2)}</span>`;
+                        let nameExtra = "";
+                        
+                        if (item.originalPrice && item.discountInfo) {
+                             priceHtml = `<span class="old-price-print">R$ ${item.originalPrice.toFixed(2)}</span><span>R$ ${item.totalPrice.toFixed(2)}</span>`;
+                             nameExtra = `<br><span class="discount-tag">(-${item.discountInfo.percentage}%)</span>`;
+                        }
+
+                        return `<div class="item">
+                            <span class="item-name">${item.name} ${item.weightGrams ? `(${item.weightGrams}g)` : ''}${nameExtra}</span>
+                            <span class="item-price">${priceHtml}</span>
+                        </div>`
+                    }).join('')}
                     ${feeHtml}
                     <div class="divider"></div>
                     <div class="item total"><span>TOTAL:</span><span>R$ ${sale.total.toFixed(2)}</span></div>
@@ -1245,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             all() {
                 App.DOM.currentDate.textContent = new Date().toLocaleDateString('pt-BR');
                 App.DOM.historyDate.value = App.state.ui.today;
-                App.DOM.expenseDate.value = App.state.ui.today; // NOVO
+                App.DOM.expenseDate.value = App.state.ui.today; 
                 App.DOM.acaiPriceInput.value = App.state.config.açaíPricePerKg.toFixed(2);
                 App.DOM.sorvetePriceInput.value = App.state.config.sorvetePricePerKg.toFixed(2);
                 App.DOM.deletePasswordInput.value = App.state.config.deletePassword;
@@ -1254,11 +1349,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.productCategories();
                 this.products();
                 this.history(App.state.ui.today);
-                this.expenses(App.state.ui.today); // NOVO
+                this.expenses(App.state.ui.today); 
                 this.adminProducts();
                 this.openOrdersGrid();
                 this.deliveryMode(); 
             },
+            // NOVO: Renderiza controles do Admin
+            discountControls() {
+                const { active, percentage, targets } = App.state.discount;
+                App.DOM.discountActiveCheck.checked = active;
+                App.DOM.discountPercentageInput.value = percentage;
+                App.DOM.discountTargetAcai.checked = targets.acai;
+                App.DOM.discountTargetSorvete.checked = targets.sorvete;
+                
+                if (active) {
+                    App.DOM.discountConfigArea.classList.remove('disabled');
+                } else {
+                    App.DOM.discountConfigArea.classList.add('disabled');
+                }
+            },
+            // NOVO: Renderiza o balão na aba Venda
+            activeDiscountIndicator() {
+                const { active, percentage, targets } = App.state.discount;
+                if (active) {
+                    let items = [];
+                    if (targets.acai) items.push("Açaí");
+                    if (targets.sorvete) items.push("Sorvete");
+                    
+                    if (items.length > 0) {
+                        App.DOM.discountBalloon.style.display = 'flex';
+                        App.DOM.discountDetails.textContent = `${percentage}% OFF em ${items.join(' e ')}`;
+                    } else {
+                        App.DOM.discountBalloon.style.display = 'none';
+                    }
+                } else {
+                    App.DOM.discountBalloon.style.display = 'none';
+                }
+            },
+
+            // MODIFICADO: Renderiza o carrinho com risco de preço antigo
             cart() {
                 const { cartItems, subtotal, total } = App.DOM;
                 cartItems.innerHTML = '';
@@ -1270,7 +1399,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         const itemElement = document.createElement('div');
                         itemElement.className = 'cart-item';
                         const details = (item.type === "weight") ? `<div class="item-weight">${item.weightGrams}g</div>` : '';
-                        itemElement.innerHTML = `<div class="item-info"><div class="item-quantity">${index + 1}</div><div class="item-details"><div class="item-name">${item.name}</div>${details}</div></div><div class="item-price">R$ ${item.totalPrice.toFixed(2)}</div><div class="item-actions"><button class="btn-small btn-remove" data-index="${index}">✕</button></div>`;
+                        
+                        // Lógica de display de preço
+                        let priceDisplay = `<div class="item-price">R$ ${item.totalPrice.toFixed(2)}</div>`;
+                        if (item.originalPrice) {
+                            priceDisplay = `
+                                <div class="item-price-container">
+                                    <span class="old-price">R$ ${item.originalPrice.toFixed(2)}</span>
+                                    <span class="item-price">R$ ${item.totalPrice.toFixed(2)}</span>
+                                </div>
+                            `;
+                        }
+
+                        itemElement.innerHTML = `
+                            <div class="item-info">
+                                <div class="item-quantity">${index + 1}</div>
+                                <div class="item-details">
+                                    <div class="item-name">${item.name}</div>
+                                    ${details}
+                                </div>
+                            </div>
+                            ${priceDisplay}
+                            <div class="item-actions">
+                                <button class="btn-small btn-remove" data-index="${index}">✕</button>
+                            </div>
+                        `;
                         cartItems.appendChild(itemElement);
                     });
                 } else {
@@ -1329,29 +1482,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }));
             },
             
-            // *** FUNÇÃO DE RENDERIZAÇÃO DO HISTÓRICO MODIFICADA ***
             history(date) {
                 const { salesHistory, historySummary, historyProductsTotal, historyDeliveryTotal, historyExpensesTotal, historyGrandTotal } = App.DOM;
                 
                 salesHistory.innerHTML = '';
                 
                 const salesForDate = App.state.salesHistory[date] || [];
-                const expensesForDate = App.state.expenses[date] || []; // NOVO: Pega despesas
+                const expensesForDate = App.state.expenses[date] || []; 
                 
-                // Zera os contadores
                 let totalGeral = 0;
                 let totalProdutos = 0;
                 let totalEntregas = 0;
-                let totalDespesas = 0; // NOVO
+                let totalDespesas = 0; 
 
-                // Se não há nada, esconde o sumário
                 if (salesForDate.length === 0 && expensesForDate.length === 0) {
                     salesHistory.innerHTML = '<div class="empty-state">Nenhuma venda para esta data</div>';
                     historySummary.style.display = 'none'; 
                     return;
                 }
 
-                // Processa Vendas
                 salesForDate.forEach(sale => {
                     const item = document.createElement('div');
                     item.className = 'sale-item';
@@ -1359,13 +1508,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const taxaEntrega = (sale.deliveryInfo && sale.deliveryInfo.mode === 'entrega' && sale.deliveryInfo.fee > 0) ? sale.deliveryInfo.fee : 0;
                     const valorProdutos = sale.total - taxaEntrega;
                     
-                    totalGeral += sale.total; // Soma o total da venda (receita)
+                    totalGeral += sale.total; 
                     totalProdutos += valorProdutos;
                     totalEntregas += taxaEntrega;
                     
                     const itemsHtml = sale.items.map(i => {
                         const detail = i.weightGrams ? `(${i.weightGrams}g)` : '';
-                        return `<div class="sale-item-detail" style="font-size: 13px;">- ${i.name} ${detail}</div>`;
+                        // Se tiver desconto, mostra no histórico também
+                        let extraInfo = '';
+                        if (i.discountInfo) {
+                            extraInfo = ` [${i.discountInfo.percentage}% OFF]`;
+                        }
+                        return `<div class="sale-item-detail" style="font-size: 13px;">- ${i.name} ${detail}${extraInfo}</div>`;
                     }).join('');
                     
                     const openTimeHtml = (sale.openTimeMinutes && sale.openTimeMinutes > 0)
@@ -1400,24 +1554,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     salesHistory.appendChild(item);
                 });
                 
-                // NOVO: Processa Despesas
                 expensesForDate.forEach(expense => {
                     totalDespesas += expense.value;
                 });
 
-                // Calcula o Saldo Final
                 const saldoDia = totalGeral - totalDespesas;
 
-                // Renderiza os totais no sumário e o exibe
                 historyProductsTotal.textContent = `R$ ${totalProdutos.toFixed(2)}`;
                 historyDeliveryTotal.textContent = `R$ ${totalEntregas.toFixed(2)}`;
-                historyExpensesTotal.textContent = `R$ ${totalDespesas.toFixed(2)}`; // NOVO
-                historyGrandTotal.textContent = `R$ ${saldoDia.toFixed(2)}`; // MODIFICADO
+                historyExpensesTotal.textContent = `R$ ${totalDespesas.toFixed(2)}`; 
+                historyGrandTotal.textContent = `R$ ${saldoDia.toFixed(2)}`; 
                 historySummary.style.display = 'block';
             },
-            // *** FIM DA FUNÇÃO ALTERADA ***
             
-            // NOVO: Renderiza lista de despesas
             expenses(date) {
                 const { expensesHistoryList, expensesSummary, expensesTotalToday } = App.DOM;
                 expensesHistoryList.innerHTML = '';
@@ -1434,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 expensesForDate.forEach(expense => {
                     totalDespesas += expense.value;
                     const item = document.createElement('div');
-                    item.className = 'expense-item'; // Nova classe para despesa
+                    item.className = 'expense-item'; 
                     
                     item.innerHTML = `
                         <div class="expense-info">
@@ -1636,7 +1785,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 text += `Itens:\n`;
                 sale.items.forEach(item => {
-                    text += `${item.name.padEnd(20)}R$ ${item.totalPrice.toFixed(2).padStart(7)}\n`;
+                    let priceLine = `R$ ${item.totalPrice.toFixed(2).padStart(7)}`;
+                    if (item.originalPrice) {
+                        // Indica que teve desconto
+                        text += `${item.name.padEnd(20)} (De R$ ${item.originalPrice.toFixed(2)})\n`;
+                        text += `  ${`Com desconto:`.padEnd(18)}${priceLine}\n`;
+                    } else {
+                        text += `${item.name.padEnd(20)}${priceLine}\n`;
+                    }
+                    
                     if (item.type === 'weight') text += `  (${item.weightGrams}g)\n`;
                 });
                 
@@ -1657,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', () => {
         storage: {
             load() {
                 const salesHistory = localStorage.getItem('salesHistory');
-                const expenses = localStorage.getItem('expenses'); // NOVO
+                const expenses = localStorage.getItem('expenses'); 
                 const products = localStorage.getItem('products');
                 const acaiPrice = localStorage.getItem('açaíPricePerKg');
                 const sorvetePrice = localStorage.getItem('sorvetePricePerKg'); 
@@ -1665,7 +1822,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const openOrders = localStorage.getItem('openOrders'); 
                 
                 if(salesHistory) App.state.salesHistory = JSON.parse(salesHistory);
-                if(expenses) App.state.expenses = JSON.parse(expenses); // NOVO
+                if(expenses) App.state.expenses = JSON.parse(expenses); 
                 if(products) App.state.products = JSON.parse(products);
                 if(acaiPrice) App.state.config.açaíPricePerKg = parseFloat(acaiPrice);
                 if(sorvetePrice) App.state.config.sorvetePricePerKg = parseFloat(sorvetePrice);
@@ -1675,7 +1832,6 @@ document.addEventListener('DOMContentLoaded', () => {
             saveSalesHistory() {
                 localStorage.setItem('salesHistory', JSON.stringify(App.state.salesHistory));
             },
-            // NOVO
             saveExpenses() {
                 localStorage.setItem('expenses', JSON.stringify(App.state.expenses));
             },
