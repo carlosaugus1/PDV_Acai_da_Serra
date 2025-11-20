@@ -703,6 +703,7 @@ input:checked + .slider:before {
 .sale-date { font-size: 12px; color: #666; }
 .sale-items { font-size: 14px; margin: 5px 0; font-weight: 600;}
 
+/* Estilos para item de despesa */
 .expense-info { display: flex; flex-direction: column; flex: 1; }
 .expense-name { font-weight: 600; font-size: 16px; }
 .expense-desc { font-size: 12px; color: #666; }
@@ -754,7 +755,7 @@ input:checked + .slider:before {
     padding: 10px; border: 1px solid #ddd; border-radius: 6px;
     font-size: 16px; width: 100%;
 }
-
+/* Força o input de mês a ter a mesma aparência */
 input[type="month"] {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -872,7 +873,7 @@ input[type="month"] {
         flex-wrap: wrap;
     } */
     .tab {
-        flex-basis: 33.3%; 
+        flex-basis: 33.3%; /* Ajusta para 3 abas por linha */
         font-size: 0.9rem;
     }
     .touch-btn {
@@ -908,6 +909,7 @@ input[type="month"] {
         grid-template-columns: 1fr;
         gap: 10px;
     }
+    /* Reduz o botão de exportar na aba de histórico em telas pequenas */
     #historico-tab .history-controls {
         grid-template-columns: 1fr;
     }
