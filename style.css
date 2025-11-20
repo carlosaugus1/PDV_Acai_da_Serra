@@ -118,8 +118,58 @@ header {
     line-height: 1;
 }
 
-.tab-content { display: none; }
+.tab-content { display: none; position: relative; }
 .tab-content.active { display: block; }
+
+/* --- ESTILOS PARA O BALÃO DE DESCONTO (MODIFICADO) --- */
+.discount-balloon {
+    /* Gradiente verde suave */
+    background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+    border-left: 5px solid var(--success); /* Borda verde sólida */
+    border-radius: 10px;
+    /* Tamanho reduzido */
+    padding: 8px 15px;
+    margin: 0 auto 15px auto; /* Centralizado */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2); /* Sombra esverdeada */
+    animation: pulse-subtle 2s infinite;
+    max-width: 80%; /* Largura reduzida */
+}
+
+@keyframes pulse-subtle {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.discount-icon {
+    font-size: 20px; /* Ícone menor */
+}
+
+.discount-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.discount-title {
+    font-weight: 800;
+    color: #2E7D32; /* Verde escuro para contraste */
+    font-size: 10px; /* Fonte menor */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#discount-details {
+    font-weight: bold;
+    font-size: 14px; /* Fonte menor */
+    color: #1B5E20; /* Verde bem escuro */
+}
+
+/* --- FIM BALÃO DE DESCONTO --- */
 
 .section-card {
     background: white;
@@ -139,6 +189,167 @@ header {
     align-items: center;
     font-weight: 600;
 }
+
+/* --- ESTILOS ADMIN PROMOÇÃO --- */
+.discount-section {
+    border: 2px solid var(--primary);
+    background: #fbfaff;
+}
+
+.discount-controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.discount-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.toggle-label {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Toggle Switch CSS */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: var(--primary);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary);
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.discount-config-area {
+    transition: opacity 0.3s;
+}
+.discount-config-area.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.discount-targets {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+/* Custom Checkbox */
+.checkbox-container {
+  display: block;
+  position: relative;
+  padding-left: 35px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  font-weight: 600;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: #eee;
+  border-radius: 5px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: var(--primary);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 9px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+/* --- FIM ESTILOS ADMIN PROMOÇÃO --- */
 
 .weight-controls {
     display: grid;
@@ -318,8 +529,22 @@ header {
 .item-details { display: flex; flex-direction: column; }
 .item-name { font-weight: 600; color: #444; }
 .item-weight { font-size: 12px; color: #666; }
+
+.item-price-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
 .item-price { font-weight: bold; color: var(--primary); }
-.item-actions { display: flex; gap: 5px; }
+
+.old-price {
+    font-size: 11px;
+    text-decoration: line-through;
+    color: #999;
+}
+
+.item-actions { display: flex; gap: 5px; margin-left: 10px;}
 
 .btn-small {
     background: #f0f0f0; border: none; width: 35px; height: 35px;
@@ -478,7 +703,6 @@ header {
 .sale-date { font-size: 12px; color: #666; }
 .sale-items { font-size: 14px; margin: 5px 0; font-weight: 600;}
 
-/* Estilos para item de despesa */
 .expense-info { display: flex; flex-direction: column; flex: 1; }
 .expense-name { font-weight: 600; font-size: 16px; }
 .expense-desc { font-size: 12px; color: #666; }
@@ -530,7 +754,7 @@ header {
     padding: 10px; border: 1px solid #ddd; border-radius: 6px;
     font-size: 16px; width: 100%;
 }
-/* Força o input de mês a ter a mesma aparência */
+
 input[type="month"] {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -648,7 +872,7 @@ input[type="month"] {
         flex-wrap: wrap;
     } */
     .tab {
-        flex-basis: 33.3%; /* Ajusta para 3 abas por linha */
+        flex-basis: 33.3%; 
         font-size: 0.9rem;
     }
     .touch-btn {
@@ -684,7 +908,6 @@ input[type="month"] {
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    /* Reduz o botão de exportar na aba de histórico em telas pequenas */
     #historico-tab .history-controls {
         grid-template-columns: 1fr;
     }
