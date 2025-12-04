@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.state.discount.active = true;
                 this.state.discount.percentage = 10;
                 this.state.discount.targets.acai = true;
+                this.state.discount.targets.sorvete = true;
             }
         },
 
