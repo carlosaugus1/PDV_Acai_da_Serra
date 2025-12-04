@@ -90,6 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyDeliveryTotal: document.getElementById('history-delivery-total'),
                 historyExpensesTotal: document.getElementById('history-expenses-total'),
                 historyGrandTotal: document.getElementById('history-grand-total'),
+                
+                // Novos elementos para totais por pagamento
+                historyCashTotal: document.getElementById('history-cash-total'),
+                historyCardTotal: document.getElementById('history-card-total'),
+                historyPixTotal: document.getElementById('history-pix-total'),
 
                 loginSection: document.getElementById('login-section'),
                 adminControlsPanel: document.getElementById('admin-controls-panel'),
@@ -963,6 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let totalProdutos = 0;
                 let totalEntregas = 0;
                 let totalDespesas = 0; 
+                let pagamentos = { cash: 0, card: 0, pix: 0 }; // Inicializa contadores
                 
                 if (salesForDate.length > 0) {
                     doc.setFontSize(14);
@@ -1006,6 +1012,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         totalGeral += sale.total;
                         totalProdutos += valorProdutos;
                         totalEntregas += taxaEntrega;
+
+                        // Soma aos totais por pagamento
+                        if (pagamentos.hasOwnProperty(sale.paymentMethod)) {
+                            pagamentos[sale.paymentMethod] += sale.total;
+                        }
                     });
                     
                     doc.autoTable({
@@ -1068,14 +1079,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.text(`Total em Produtos: R$ ${totalProdutos.toFixed(2)}`, 14, finalY);
                 doc.text(`Total em Entregas: R$ ${totalEntregas.toFixed(2)}`, 14, finalY + 5);
                 
+                // Adicionando o resumo por Pagamento no PDF
+                finalY += 10;
+                doc.text(`Total por Pagamento:`, 14, finalY);
+                finalY += 5;
+                doc.text(`Dinheiro: R$ ${pagamentos.cash.toFixed(2)}`, 20, finalY);
+                doc.text(`Cartão: R$ ${pagamentos.card.toFixed(2)}`, 20, finalY + 5);
+                doc.text(`PIX: R$ ${pagamentos.pix.toFixed(2)}`, 20, finalY + 10);
+                finalY += 15;
+
                 doc.setTextColor(220, 53, 69); 
-                doc.text(`Total em Despesas: R$ ${totalDespesas.toFixed(2)}`, 14, finalY + 10);
+                doc.text(`Total em Despesas: R$ ${totalDespesas.toFixed(2)}`, 14, finalY);
                 doc.setTextColor(0, 0, 0); 
                 
                 // Saldo do Dia = Receita Bruta
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
-                doc.text(`Total de Vendas do Dia: R$ ${totalGeral.toFixed(2)}`, 14, finalY + 17);
+                doc.text(`Total de Vendas do Dia: R$ ${totalGeral.toFixed(2)}`, 14, finalY + 7);
 
                 doc.save(`relatorio_diario_${date}.pdf`);
                 App.utils.showNotification('PDF diário gerado com sucesso!', 'success');
@@ -1466,7 +1486,12 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             
             history(date) {
-                const { salesHistory, historySummary, historyProductsTotal, historyDeliveryTotal, historyExpensesTotal, historyGrandTotal } = App.DOM;
+                const { 
+                    salesHistory, historySummary, 
+                    historyProductsTotal, historyDeliveryTotal, 
+                    historyExpensesTotal, historyGrandTotal,
+                    historyCashTotal, historyCardTotal, historyPixTotal // Elementos adicionados
+                } = App.DOM;
                 
                 salesHistory.innerHTML = '';
                 
@@ -1477,6 +1502,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let totalProdutos = 0;
                 let totalEntregas = 0;
                 let totalDespesas = 0; 
+                let pagamentos = { cash: 0, card: 0, pix: 0 }; // Inicializa contadores
 
                 if (salesForDate.length === 0 && expensesForDate.length === 0) {
                     salesHistory.innerHTML = '<div class="empty-state">Nenhuma venda para esta data</div>';
@@ -1494,6 +1520,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalGeral += sale.total; 
                     totalProdutos += valorProdutos;
                     totalEntregas += taxaEntrega;
+
+                    // Soma aos totais por pagamento
+                    if (pagamentos.hasOwnProperty(sale.paymentMethod)) {
+                        pagamentos[sale.paymentMethod] += sale.total;
+                    }
                     
                     const itemsHtml = sale.items.map(i => {
                         const detail = i.weightGrams ? `(${i.weightGrams}g)` : '';
@@ -1544,6 +1575,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 historyProductsTotal.textContent = `R$ ${totalProdutos.toFixed(2)}`;
                 historyDeliveryTotal.textContent = `R$ ${totalEntregas.toFixed(2)}`;
+                
+                // Atualiza os valores do resumo de pagamento
+                historyCashTotal.textContent = `R$ ${pagamentos.cash.toFixed(2)}`;
+                historyCardTotal.textContent = `R$ ${pagamentos.card.toFixed(2)}`;
+                historyPixTotal.textContent = `R$ ${pagamentos.pix.toFixed(2)}`;
+
                 historyExpensesTotal.textContent = `R$ ${totalDespesas.toFixed(2)}`; 
                 historyGrandTotal.textContent = `R$ ${saldoDia.toFixed(2)}`; 
                 historySummary.style.display = 'block';
