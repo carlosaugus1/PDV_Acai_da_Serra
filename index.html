@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDV Açaí da Serra - Touch</title>
     <link rel="icon" href="image/Icoacaidaserra.ico" type="image/x-icon">
-    <!-- Links para os arquivos de Estilo e PDF -->
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -20,7 +19,6 @@
             <div class="current-date" id="current-date">--/--/----</div>
         </header>
         
-        <!-- Abas de Navegação (Nova aba "Despesas" adicionada) -->
         <div class="tabs">
             <div class="tab active" data-tab="venda">🛒 <span>Venda</span></div>
             <div class="tab" data-tab="produtos">🍦 <span>Produtos</span></div>
@@ -29,15 +27,12 @@
                 <span class="notification-badge" id="open-orders-count" style="display: none;">0</span>
             </div>
             <div class="tab" data-tab="historico">📜 <span>Histórico</span></div>
-            <!-- NOVA ABA DE DESPESAS -->
             <div class="tab" data-tab="despesas">💸 <span>Despesas</span></div>
             <div class="tab" data-tab="admin">⚙️ <span>Administrativo</span></div>
         </div>
         
-        <!-- Conteúdo da Aba: Venda -->
         <div class="tab-content active" id="venda-tab">
             
-            <!-- BALÃO DE DESCONTO (NOVO) -->
             <div id="discount-balloon" class="discount-balloon" style="display: none;">
                 <span class="discount-icon">🏷️</span>
                 <div class="discount-text">
@@ -78,8 +73,7 @@
                 </div>
 
                 <div class="quick-add-buttons">
-                    <!-- Botões gerados via JS -->
-                </div>
+                    </div>
             </div>
             
             <div class="section-card">
@@ -140,7 +134,6 @@
             </div>
         </div>
         
-        <!-- Conteúdo da Aba: Produtos -->
         <div class="tab-content" id="produtos-tab">
             <div class="section-card">
                 <h2 class="section-title">Produtos</h2>
@@ -152,7 +145,6 @@
             </div>
         </div>
         
-        <!-- Conteúdo da Aba: Comandas -->
         <div class="tab-content" id="comandas-tab">
             <div class="section-card">
                 <h2 class="section-title">Comandas em Aberto</h2>
@@ -162,7 +154,6 @@
             </div>
         </div>
         
-        <!-- Conteúdo da Aba: Histórico -->
         <div class="tab-content" id="historico-tab">
             <div class="section-card">
                 <h2 class="section-title">Histórico de Vendas</h2>
@@ -184,6 +175,21 @@
                         <span>Total em Entregas:</span>
                         <span id="history-delivery-total">R$ 0,00</span>
                     </div>
+                    
+                    <div style="margin: 10px 0; border-top: 1px dashed #ddd; border-bottom: 1px dashed #ddd; padding: 5px 0;">
+                        <div class="summary-row" style="font-size: 0.9em; color: #555; margin-bottom: 5px;">
+                            <span>💵 Dinheiro:</span>
+                            <span id="history-cash-total">R$ 0,00</span>
+                        </div>
+                        <div class="summary-row" style="font-size: 0.9em; color: #555; margin-bottom: 5px;">
+                            <span>💳 Cartão:</span>
+                            <span id="history-card-total">R$ 0,00</span>
+                        </div>
+                        <div class="summary-row" style="font-size: 0.9em; color: #555; margin-bottom: 5px;">
+                            <span>📱 PIX:</span>
+                            <span id="history-pix-total">R$ 0,00</span>
+                        </div>
+                    </div>
                     <div class="summary-row" style="color: var(--danger);">
                         <span>Total em Despesas:</span>
                         <span id="history-expenses-total">R$ 0,00</span>
@@ -196,7 +202,6 @@
             </div>
         </div>
         
-        <!-- Aba: Despesas -->
         <div class="tab-content" id="despesas-tab">
             <div class="section-card">
                 <h2 class="section-title">Registrar Nova Despesa</h2>
@@ -224,10 +229,8 @@
             </div>
         </div>
 
-        <!-- Conteúdo da Aba: Administrativo -->
         <div class="tab-content" id="admin-tab">
             
-            <!-- NOVA SEÇÃO DE DESCONTOS (Antes do login) -->
             <div class="section-card discount-section">
                 <h2 class="section-title">Gerenciar Promoções</h2>
                 <div class="discount-controls-container">
@@ -261,8 +264,6 @@
                     </div>
                 </div>
             </div>
-            <!-- FIM SEÇÃO DE DESCONTOS -->
-
             <div class="section-card">
                 <div id="login-section">
                     <h2 class="section-title">Acesso Restrito</h2>
@@ -341,7 +342,6 @@
         </div>
     </div>
     
-    <!-- Modais -->
     <div class="modal" id="password-modal">
         <div class="modal-content">
             <h3>Excluir Item</h3>
@@ -468,7 +468,6 @@
     
     <div id="notification" class="notification"></div>
 
-    <!-- Link para o arquivo JavaScript principal -->
     <script src="app.js"></script>
 </body>
 </html>
