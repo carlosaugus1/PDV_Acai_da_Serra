@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 { id: 2, name: "Água com Gás", price: 3.00, category: "Bebidas", image: "" }
             ],
             config: {
-                açaíPricePerKg: 43.90,
-                sorvetePricePerKg: 43.90, 
+                açaíPricePerKg: 44.90,
+                sorvetePricePerKg: 44.90, 
                 deletePassword: '1015',
             },
             discount: {
