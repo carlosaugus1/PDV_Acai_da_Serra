@@ -3,566 +3,795 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDV Açaí da Serra - Touch</title>
+    <title>PDV Açaí da Serra</title>
     <link rel="icon" href="image/Icoacaidaserra.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo-container">
-                <img src="image/acaidaserra.png" alt="Logo da Açaí da Serra" style="height: 250px;">
+    <div class="app-wrapper">
+        <!-- SIDEBAR (MENU LATERAL) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="image/acaidaserra.png" alt="Logo" class="sidebar-logo">
+                <div class="sidebar-title">Açaí da Serra</div>
+                <div class="sidebar-subtitle">Sistema PDV</div>
             </div>
-            <div class="subtitle">Sistema para controle de vendas</div>
-            <div class="current-date" id="current-date">--/--/----</div>
-        </header>
-        
-        <div class="tabs">
-            <div class="tab" data-tab="caixa">🏪 <span>Caixa</span></div>
-            <div class="tab active" data-tab="venda">🛒 <span>Venda</span></div>
-            <div class="tab" data-tab="produtos">🍦 <span>Produtos</span></div>
-            <div class="tab" data-tab="comandas">
-                <span>📋</span> Comandas
-                <span class="notification-badge" id="open-orders-count" style="display: none;">0</span>
-            </div>
-            <div class="tab" data-tab="historico">📜 <span>Histórico</span></div>
-            <div class="tab" data-tab="despesas">💸 <span>Despesas</span></div>
-            <div class="tab" data-tab="admin">⚙️ <span>Administrativo</span></div>
-        </div>
-        
-        <div class="tab-content" id="caixa-tab">
-            <div id="cash-register-opening" class="section-card" style="display: none;">
-                <h2 class="section-title">Abertura de Caixa</h2>
-                <p style="margin-bottom: 15px; color: #666;">Informe os valores disponíveis na gaveta para iniciar o expediente.</p>
-                
-                <div class="admin-controls" style="grid-template-columns: 1fr; gap: 15px;">
-                    <div>
-                        <label for="opening-bills">Total em Cédulas (R$)</label>
-                        <input type="number" id="opening-bills" class="admin-input" placeholder="0.00" step="0.01">
-                    </div>
-                    <div>
-                        <label for="opening-coins">Total em Moedas (R$)</label>
-                        <input type="number" id="opening-coins" class="admin-input" placeholder="0.00" step="0.01">
-                    </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-tab="venda">
+                    <span class="nav-icon">🛍️</span>
+                    <span class="nav-text">Venda</span>
                 </div>
-                
-                <div class="cart-summary" style="margin-top: 20px;">
-                    <div class="summary-row total">
-                        <span>Fundo Total:</span>
-                        <span id="opening-total-display">R$ 0,00</span>
-                    </div>
+                <div class="nav-item" data-tab="produtos">
+                    <span class="nav-icon">🍦</span>
+                    <span class="nav-text">Produtos</span>
                 </div>
-
-                <button id="btn-open-register" class="touch-btn btn-success" style="width: 100%; margin-top: 15px;">Confirmar Abertura</button>
-            </div>
-
-            <div id="cash-register-dashboard" class="section-card" style="display: none;">
-                <h2 class="section-title">
-                    <span>Controle de Caixa</span>
-                    <span class="status-badge open">ABERTO</span>
-                </h2>
-                
-                <div class="cash-summary-grid">
-                    <div class="cash-card info">
-                        <div class="card-label">Saldo Inicial</div>
-                        <div class="card-value" id="dash-opening-balance">R$ 0,00</div>
-                        <div class="card-sub">Cédulas + Moedas</div>
-                    </div>
-                    
-                    <div class="cash-card success">
-                        <div class="card-label">Vendas (Dinheiro)</div>
-                        <div class="card-value" id="dash-cash-sales">R$ 0,00</div>
-                        <div class="card-sub">Entradas em espécie</div>
-                    </div>
-                    
-                    <div class="cash-card danger">
-                        <div class="card-label">Saídas/Despesas</div>
-                        <div class="card-value" id="dash-expenses">R$ 0,00</div>
-                        <div class="card-sub">Retiradas do caixa</div>
-                    </div>
-                    
-                    <div class="cash-card primary main-balance">
-                        <div class="card-label">Saldo em Gaveta (Sistema)</div>
-                        <div class="card-value" id="dash-current-balance">R$ 0,00</div>
-                        <div class="card-sub">Estimativa atual</div>
-                    </div>
+                <div class="nav-item" data-tab="comandas">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Comandas</span>
+                    <span class="nav-badge" id="open-orders-count" style="display: none;">0</span>
                 </div>
-
-                <div class="divider" style="margin: 20px 0; border-bottom: 1px dashed #ccc;"></div>
-                
-                <div style="background: #f0f0f0; padding: 15px; border-radius: 8px;">
-                    <h3 style="margin-bottom: 10px; font-size: 1rem;">Outros Recebimentos</h3>
-                    <div class="summary-row" style="margin-bottom: 5px;">
-                        <span>💳 Cartão:</span>
-                        <span id="dash-card-total">R$ 0,00</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>📱 PIX:</span>
-                        <span id="dash-pix-total">R$ 0,00</span>
-                    </div>
+                <div class="nav-item" data-tab="historico">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">Histórico</span>
                 </div>
+                <div class="nav-item" data-tab="despesas">
+                    <span class="nav-icon">💸</span>
+                    <span class="nav-text">Despesas</span>
+                </div>
+                <div class="nav-item" data-tab="caixa">
+                    <span class="nav-icon">🏪</span>
+                    <span class="nav-text">Caixa</span>
+                </div>
+                <div class="nav-item" data-tab="admin">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Admin</span>
+                </div>
+            </nav>
+        </aside>
 
-                <button id="btn-close-register" class="touch-btn btn-danger" style="width: 100%; margin-top: 20px;">Fechar Caixa</button>
-            </div>
-        </div>
-        
-        <div class="tab-content active" id="venda-tab">
-            <div id="discount-balloon" class="discount-balloon" style="display: none;">
-                <span class="discount-icon">🏷️</span>
-                <div class="discount-text">
-                    <span class="discount-title">PROMOÇÃO ATIVA!</span>
-                    <span id="discount-details">10% OFF em Açaí</span>
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div class="topbar-title" id="topbar-title">PDV - Ponto de Venda</div>
+                <div class="topbar-info">
+                    <div class="date-badge" id="current-date">--/--/----</div>
+                    <div class="user-badge" style="display: none;" id="user-badge">
+                        <span>👤</span>
+                        <span id="logged-user">Admin</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="section-card">
-                <h2 class="section-title">
-                    <span>Venda por KG</span>
-                    <span class="product-price">R$ <span id="weighted-product-price-display">0.00</span>/kg</span>
-                </h2>
-                
-                <div class="product-type-selector">
-                    <button class="quick-add-btn active" data-type="acai">
-                        <div class="product-type-icon">
-                            <img src="image/acai.png" alt="Ícone de Açaí" style="width: 100%; height: 100%;">
-                        </div>
-                        Açaí
-                    </button>
-                    <button class="quick-add-btn" data-type="sorvete">
-                        <div class="product-type-icon">
-                           <img src="image/sorvete.png" alt="Ícone de Sorvete" style="width: 100%; height: 100%;">
-                        </div>
-                        Sorvete
-                    </button>
-                </div>
-                
-                <div class="weight-controls">
-                    <input type="number" class="weight-input" id="weight-input" placeholder="Gramas" min="0">
-                    <button id="add-to-cart" class="touch-btn btn-primary">Adicionar</button>
-                </div>
-                
-                <div class="product-info">
-                    <div>Valor calculado:</div>
-                    <div class="product-price">R$ <span id="calculated-price">0.00</span></div>
-                </div>
-
-                <div class="quick-add-buttons"></div>
-            </div>
-            
-            <div class="section-card">
-                <h2 class="section-title">Carrinho de Vendas</h2>
-                <div class="cart-items" id="cart-items">
-                    <div class="empty-state">Carrinho vazio</div>
-                </div>
-                
-                <div class="cart-summary">
-                    <div class="summary-row">
-                        <span>Subtotal:</span>
-                        <span id="subtotal">R$ 0,00</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total:</span>
-                        <span id="total">R$ 0,00</span>
-                    </div>
-                </div>
-                
-                <div class="action-buttons">
-                    <button id="finish-sale" class="touch-btn btn-success">Finalizar Venda</button>
-                    <button id="hold-sale" class="touch-btn btn-warning">Pagamento Posterior</button>
-                    <button id="cancel-sale" class="touch-btn btn-danger">Cancelar Venda</button>
-                </div>
-            </div>
-            
-            <div class="section-card">
-                <h2 class="section-title">Tipo de Venda</h2>
-                <div class="delivery-mode-selector" id="delivery-mode-selector">
-                    <button class="delivery-mode-btn active" data-mode="balcao">🏪 Balcão</button>
-                    <button class="delivery-mode-btn" data-mode="entrega">🚚 Entrega</button>
-                </div>
-                <div class="delivery-info-section" id="delivery-info-section" style="display: none;">
-                    <input type="text" id="delivery-customer-name" class="admin-input" placeholder="Nome do Cliente">
-                    <input type="text" id="delivery-customer-address" class="admin-input" placeholder="Endereço">
-                    <input type="number" id="delivery-fee" class="admin-input" placeholder="Valor da Entrega (R$)" min="0" step="0.01">
-                </div>
-            </div>
-            
-            <div class="section-card payment-section">
-                <h2 class="section-title">Pagamento</h2>
-                <div class="payment-options">
-                    <div class="payment-option" data-method="cash"><i>💵</i><div>Dinheiro</div></div>
-                    <div class="payment-option" data-method="card"><i>💳</i><div>Cartão</div></div>
-                    <div class="payment-option" data-method="pix"><i>📱</i><div>PIX</div></div>
-                </div>
-                
-                <div class="cash-input" id="cash-input">
-                    <input type="number" id="cash-received" placeholder="Valor recebido em R$">
-                    <div class="change-display" id="change-display">
-                        Troco: R$ <span id="change-amount">0,00</span>
-                    </div>
-                </div>
-                
-                <button id="confirm-payment" class="touch-btn btn-success" style="width: 100%; margin-top: 10px; display: none;">
-                    Confirmar Pagamento
-                </button>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="produtos-tab">
-            <div class="section-card">
-                <h2 class="section-title">Produtos</h2>
-                <div class="search-container" style="margin-bottom: 15px;">
-                    <input type="search" id="product-search" class="admin-input" placeholder="🔍 Pesquisar produto...">
-                </div>
-                <div class="products-categories" id="products-categories-list"></div>
-                <div class="products-grid" id="products-grid"></div>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="comandas-tab">
-            <div class="section-card">
-                <h2 class="section-title">Comandas em Aberto</h2>
-                <div class="open-orders-grid" id="open-orders-grid">
-                    <div class="empty-state">Nenhuma comanda em aberto</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="historico-tab">
-            <div class="section-card">
-                <h2 class="section-title">Histórico de Vendas</h2>
-                <div class="history-controls">
-                    <input type="date" class="date-selector" id="history-date">
-                    <button id="export-history-pdf" class="touch-btn btn-secondary">Exportar Dia</button>
-                    <button id="add-manual-sale-btn" class="touch-btn btn-primary">Adicionar</button>
-                </div>
-                <div class="sales-history" id="sales-history">
-                    <div class="empty-state">Nenhuma venda para esta data</div>
-                </div>
-                
-                <div class="cart-summary" id="history-summary" style="margin-top: 15px; display: none;">
-                    <div class="summary-row">
-                        <span>Total em Produtos:</span>
-                        <span id="history-products-total">R$ 0,00</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Total em Entregas:</span>
-                        <span id="history-delivery-total">R$ 0,00</span>
-                    </div>
-                    
-                    <div style="margin: 10px 0; border-top: 1px dashed #ddd; border-bottom: 1px dashed #ddd; padding: 5px 0;">
-                        <div class="summary-row" style="font-size: 0.9em; color: #555; margin-bottom: 5px;">
-                            <span>💵 Dinheiro:</span>
-                            <span id="history-cash-total">R$ 0,00</span>
-                        </div>
-                        <div class="summary-row" style="font-size: 0.9em; color: #555; margin-bottom: 5px;">
-                            <span>💳 Cartão:</span>
-                            <span id="history-card-total">R$ 0,00</span>
-                        </div>
-                        <div class="summary-row" style="font-size: 0.9em; color: #555; margin-bottom: 5px;">
-                            <span>📱 PIX:</span>
-                            <span id="history-pix-total">R$ 0,00</span>
+            <!-- CONTENT WRAPPER -->
+            <div class="content-wrapper">
+                <!-- ABA VENDA -->
+                <div class="tab-content active" id="venda-tab">
+                    <!-- Banner de Desconto -->
+                    <div class="discount-banner" id="discount-banner">
+                        <span class="discount-icon">🏷️</span>
+                        <div class="discount-text-wrapper">
+                            <div class="discount-title">PROMOÇÃO ATIVA!</div>
+                            <div class="discount-details" id="discount-details">10% OFF em Açaí</div>
                         </div>
                     </div>
-                    <div class="summary-row" style="color: var(--danger);">
-                        <span>Total em Despesas:</span>
-                        <span id="history-expenses-total">R$ 0,00</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Saldo do Dia:</span>
-                        <span id="history-grand-total">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="despesas-tab">
-            <div class="section-card">
-                <h2 class="section-title">Registrar Nova Despesa</h2>
-                <div id="add-expense-form" class="admin-controls" style="grid-template-columns: 1fr; gap: 10px;">
-                    <input type="text" id="new-expense-name" class="admin-input" placeholder="Nome da Despesa (Ex: Gás, Aluguel)">
-                    <input type="text" id="new-expense-desc" class="admin-input" placeholder="Descrição (Opcional)">
-                    <input type="number" id="new-expense-value" class="admin-input" placeholder="Valor (R$)">
-                    <button id="add-new-expense-btn" class="touch-btn btn-primary" style="width:100%;">Adicionar Despesa</button>
-                </div>
-            </div>
-            <div class="section-card">
-                <h2 class="section-title">Despesas do Dia</h2>
-                <div class="history-controls">
-                    <input type="date" class="date-selector" id="expense-date">
-                </div>
-                <div class="sales-history" id="expenses-history-list">
-                    <div class="empty-state">Nenhuma despesa para esta data</div>
-                </div>
-                <div class="cart-summary" id="expenses-summary" style="margin-top: 15px; display: none;">
-                    <div class="summary-row total" style="color: var(--danger);">
-                        <span>Total de Despesas do Dia:</span>
-                        <span id="expenses-total-today">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="tab-content" id="admin-tab">
-            <div class="section-card discount-section">
-                <h2 class="section-title">Gerenciar Promoções</h2>
-                <div class="discount-controls-container">
-                    <div class="discount-toggle-row">
-                        <label class="switch">
-                            <input type="checkbox" id="discount-active-check">
-                            <span class="slider round"></span>
-                        </label>
-                        <span class="toggle-label">Ativar Desconto</span>
+                    <!-- LAYOUT DE 3 COLUNAS -->
+                    <div class="three-column-layout">
+                        <!-- COLUNA ESQUERDA: PESAGEM E PRODUTOS -->
+                        <div>
+                            <!-- Venda por KG -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <div>
+                                        <div class="card-title">🏭 Venda por KG</div>
+                                        <div class="card-subtitle">Selecione o produto e informe o peso</div>
+                                    </div>
+                                    <div class="card-badge">R$ <span id="weighted-product-price-display">0.00</span>/kg</div>
+                                </div>
+
+                                <!-- Seletor de Produto -->
+                                <div class="product-selector" id="product-type-selector">
+                                    <div class="product-btn active" data-type="acai">
+                                        <div class="product-icon">
+                                            <img src="image/acai.png" alt="Açaí">
+                                        </div>
+                                        <div class="product-name">Açaí</div>
+                                        <div class="product-price-tag" id="acai-price-tag">R$ 45,90/kg</div>
+                                    </div>
+                                    <div class="product-btn" data-type="sorvete">
+                                        <div class="product-icon">
+                                            <img src="image/sorvete.png" alt="Sorvete">
+                                        </div>
+                                        <div class="product-name">Sorvete</div>
+                                        <div class="product-price-tag" id="sorvete-price-tag">R$ 45,90/kg</div>
+                                    </div>
+                                </div>
+
+                                <!-- Input de Peso -->
+                                <div class="weight-input-group">
+                                    <div class="input-wrapper">
+                                        <label class="input-label">Peso (gramas)</label>
+                                        <input type="number" class="weight-input" id="weight-input" placeholder="0" min="0">
+                                    </div>
+                                    <button id="add-to-cart" class="btn btn-primary btn-lg" style="align-self: flex-end;">
+                                        Adicionar
+                                    </button>
+                                </div>
+
+                                <!-- Preço Calculado -->
+                                <div class="calculated-price">
+                                    <span class="calculated-label">Valor calculado:</span>
+                                    <span class="calculated-value">R$ <span id="calculated-price">0.00</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Produtos Rápidos -->
+                            <div class="card" style="margin-top: 20px;">
+                                <div class="card-header">
+                                    <div class="card-title">⚡ Produtos Rápidos</div>
+                                </div>
+                                <div class="quick-products-grid" id="quick-products-grid">
+                                    <!-- Preenchido dinamicamente -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- COLUNA CENTRAL: CARRINHO -->
+                        <div class="cart-sticky">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">🛍️ Carrinho</div>
+                                </div>
+
+                                <!-- Items do Carrinho -->
+                                <div class="cart-items-wrapper" id="cart-items">
+                                    <div class="cart-empty">
+                                        <div class="cart-empty-icon">🛍️</div>
+                                        <div>Carrinho vazio</div>
+                                    </div>
+                                </div>
+
+                                <!-- Resumo -->
+                                <div class="cart-summary" id="cart-summary" style="display: none;">
+                                    <div class="summary-row">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal">R$ 0,00</span>
+                                    </div>
+                                    <div class="summary-row total">
+                                        <span>Total:</span>
+                                        <span id="total">R$ 0,00</span>
+                                    </div>
+                                </div>
+
+                                <!-- Ações do Carrinho -->
+                                <div class="cart-actions">
+                                    <button id="hold-sale" class="btn btn-warning">📋 Comanda</button>
+                                    <button id="cancel-sale" class="btn btn-danger">❌ Cancelar</button>
+                                </div>
+
+                                <!-- Modo de Entrega -->
+                                <div class="delivery-mode-section">
+                                    <label class="input-label">Tipo de Venda</label>
+                                    <div class="delivery-toggle" id="delivery-mode-selector">
+                                        <div class="delivery-btn active" data-mode="balcao">
+                                            🏪 Balcão
+                                        </div>
+                                        <div class="delivery-btn" data-mode="entrega">
+                                            🚚 Entrega
+                                        </div>
+                                    </div>
+                                    <div class="delivery-fields" id="delivery-info-section">
+                                        <input type="text" id="delivery-customer-name" class="form-input" placeholder="Nome do Cliente">
+                                        <input type="text" id="delivery-customer-address" class="form-input" placeholder="Endereço">
+                                        <input type="number" id="delivery-fee" class="form-input" placeholder="Taxa de Entrega (R$)" step="0.01">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- COLUNA DIREITA: PAGAMENTO -->
+                        <div class="payment-sticky">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">💳 Pagamento</div>
+                                </div>
+
+                                <!-- Opções de Pagamento -->
+                                <div class="payment-options">
+                                    <div class="payment-option" data-method="cash">
+                                        <span class="payment-icon">💵</span>
+                                        <span class="payment-label">Dinheiro</span>
+                                    </div>
+                                    <div class="payment-option" data-method="card">
+                                        <span class="payment-icon">💳</span>
+                                        <span class="payment-label">Cartão</span>
+                                    </div>
+                                    <div class="payment-option" data-method="pix">
+                                        <span class="payment-icon">📱</span>
+                                        <span class="payment-label">PIX</span>
+                                    </div>
+                                </div>
+
+                                <!-- Seção de Dinheiro -->
+                                <div class="cash-section" id="cash-input">
+                                    <label class="input-label">Valor Recebido</label>
+                                    <input type="number" id="cash-received" class="cash-received-input" placeholder="R$ 0,00" step="0.01">
+                                    <div class="change-display" id="change-display">
+                                        <div class="change-label">Troco</div>
+                                        <div class="change-amount">R$ <span id="change-amount">0,00</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Botão Finalizar -->
+                                <button id="confirm-payment" class="btn btn-success btn-block btn-lg" style="display: none;">
+                                    ✔️ Finalizar Venda
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div id="discount-config-area" class="discount-config-area disabled">
-                        <div class="admin-controls">
-                            <label>Porcentagem (%):</label>
-                            <input type="number" id="discount-percentage" class="admin-input" value="10" min="1" max="100">
+                </div>
+
+                <!-- ABA PRODUTOS -->
+                <div class="tab-content" id="produtos-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🍦 Catálogo de Produtos</div>
                         </div>
                         
-                        <div class="discount-targets">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="discount-target-acai">
-                                <span class="checkmark"></span>
-                                Aplicar no Açaí
-                            </label>
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="discount-target-sorvete">
-                                <span class="checkmark"></span>
-                                Aplicar no Sorvete
-                            </label>
+                        <div class="products-header">
+                            <input type="search" id="product-search" class="search-input" placeholder="🔍 Pesquisar produtos...">
                         </div>
-                        <button id="save-discount-config" class="touch-btn btn-primary" style="width: 100%; height: 45px; margin-top: 10px;">Salvar Configuração</button>
+                        
+                        <div class="category-filters" id="products-categories-list">
+                            <!-- Preenchido dinamicamente -->
+                        </div>
+                        
+                        <div class="products-grid" id="products-grid">
+                            <!-- Preenchido dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA COMANDAS -->
+                <div class="tab-content" id="comandas-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📋 Comandas em Aberto</div>
+                        </div>
+                        <div class="orders-grid" id="open-orders-grid">
+                            <div class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-text">Nenhuma comanda em aberto</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA HISTÓRICO -->
+                <div class="tab-content" id="historico-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📜 Histórico de Vendas</div>
+                        </div>
+                        
+                        <div class="history-controls">
+                            <input type="date" class="date-input" id="history-date">
+                            <button id="add-manual-sale-btn" class="btn btn-primary">+ Adicionar Venda</button>
+                            <button id="export-history-pdf" class="btn btn-secondary">📄 Exportar PDF</button>
+                        </div>
+                        
+                        <div class="history-list" id="sales-history">
+                            <div class="empty-state">
+                                <div class="empty-icon">📅</div>
+                                <div class="empty-text">Nenhuma venda para esta data</div>
+                            </div>
+                        </div>
+                        
+                        <div class="cart-summary" id="history-summary" style="margin-top: 20px; display: none;">
+                            <div class="summary-row">
+                                <span>Total em Produtos:</span>
+                                <span id="history-products-total">R$ 0,00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Total em Entregas:</span>
+                                <span id="history-delivery-total">R$ 0,00</span>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="summary-row">
+                                <span>💵 Dinheiro:</span>
+                                <span id="history-cash-total">R$ 0,00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>💳 Cartão:</span>
+                                <span id="history-card-total">R$ 0,00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>📱 PIX:</span>
+                                <span id="history-pix-total">R$ 0,00</span>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="summary-row" style="color: var(--danger);">
+                                <span>Total em Despesas:</span>
+                                <span id="history-expenses-total">R$ 0,00</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Saldo do Dia:</span>
+                                <span id="history-grand-total">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA DESPESAS -->
+                <div class="tab-content" id="despesas-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">💸 Registro de Despesas</div>
+                        </div>
+                        
+                        <div class="expense-form">
+                            <input type="text" id="new-expense-name" class="form-input" placeholder="Nome da Despesa">
+                            <input type="text" id="new-expense-desc" class="form-input" placeholder="Descrição (opcional)">
+                            <input type="number" id="new-expense-value" class="form-input" placeholder="Valor (R$)" step="0.01">
+                            <button id="add-new-expense-btn" class="btn btn-primary">+ Adicionar</button>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <label class="input-label">Filtrar por Data</label>
+                            <input type="date" class="date-input" id="expense-date" style="width: 250px;">
+                        </div>
+                        
+                        <div id="expenses-history-list">
+                            <div class="empty-state">
+                                <div class="empty-icon">💸</div>
+                                <div class="empty-text">Nenhuma despesa para esta data</div>
+                            </div>
+                        </div>
+                        
+                        <div class="cart-summary" id="expenses-summary" style="margin-top: 20px; display: none;">
+                            <div class="summary-row total" style="color: var(--danger);">
+                                <span>Total de Despesas do Dia:</span>
+                                <span id="expenses-total-today">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA CAIXA -->
+                <div class="tab-content" id="caixa-tab">
+                    <!-- Abertura de Caixa -->
+                    <div class="card" id="cash-register-opening" style="display: none;">
+                        <div class="card-header">
+                            <div class="card-title">🏪 Abertura de Caixa</div>
+                        </div>
+                        
+                        <p style="margin-bottom: 20px; color: var(--gray-600);">Informe os valores disponíveis na gaveta para iniciar o expediente.</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Total em Cédulas (R$)</label>
+                                <input type="number" id="opening-bills" class="form-input" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Total em Moedas (R$)</label>
+                                <input type="number" id="opening-coins" class="form-input" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="cart-summary">
+                            <div class="summary-row total">
+                                <span>Fundo Total:</span>
+                                <span id="opening-total-display">R$ 0,00</span>
+                            </div>
+                        </div>
+                        
+                        <button id="btn-open-register" class="btn btn-success btn-block btn-lg" style="margin-top: 20px;">
+                            Confirmar Abertura
+                        </button>
+                    </div>
+
+                    <!-- Dashboard do Caixa -->
+                    <div id="cash-register-dashboard" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">🏪 Controle de Caixa</div>
+                                <span class="status-badge open">ABERTO</span>
+                            </div>
+                            
+                            <div class="cash-register-grid">
+                                <div class="cash-stat-card info">
+                                    <div class="cash-stat-label">Saldo Inicial</div>
+                                    <div class="cash-stat-value" id="dash-opening-balance">R$ 0,00</div>
+                                    <div class="cash-stat-sub">Cédulas + Moedas</div>
+                                </div>
+                                
+                                <div class="cash-stat-card success">
+                                    <div class="cash-stat-label">Vendas (Dinheiro)</div>
+                                    <div class="cash-stat-value" id="dash-cash-sales">R$ 0,00</div>
+                                    <div class="cash-stat-sub">Entradas em espécie</div>
+                                </div>
+                                
+                                <div class="cash-stat-card danger">
+                                    <div class="cash-stat-label">Saídas/Despesas</div>
+                                    <div class="cash-stat-value" id="dash-expenses">R$ 0,00</div>
+                                    <div class="cash-stat-sub">Retiradas do caixa</div>
+                                </div>
+                                
+                                <div class="cash-stat-card">
+                                    <div class="cash-stat-label">Saldo em Gaveta</div>
+                                    <div class="cash-stat-value" id="dash-current-balance">R$ 0,00</div>
+                                    <div class="cash-stat-sub">Estimativa atual</div>
+                                </div>
+                            </div>
+                            
+                            <div class="divider"></div>
+                            
+                            <div style="background: var(--gray-100); padding: 20px; border-radius: var(--border-radius);">
+                                <h3 style="font-size: 14px; margin-bottom: 12px; font-weight: 600;">Outros Recebimentos</h3>
+                                <div class="summary-row">
+                                    <span>💳 Cartão:</span>
+                                    <span id="dash-card-total">R$ 0,00</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>📱 PIX:</span>
+                                    <span id="dash-pix-total">R$ 0,00</span>
+                                </div>
+                            </div>
+                            
+                            <button id="btn-close-register" class="btn btn-danger btn-block btn-lg" style="margin-top: 20px;">
+                                Fechar Caixa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA ADMIN -->
+                <div class="tab-content" id="admin-tab">
+                    <!-- Seção de Promoções -->
+                    <div class="card" style="margin-bottom: 20px; border: 2px solid var(--primary);">
+                        <div class="card-header">
+                            <div class="card-title">🏷️ Gerenciar Promoções</div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+                            <label class="switch">
+                                <input type="checkbox" id="discount-active-check">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-weight: 600;">Ativar Desconto</span>
+                        </div>
+                        
+                        <div id="discount-config-area" style="opacity: 0.5; pointer-events: none;">
+                            <div class="form-group">
+                                <label class="form-label">Porcentagem (%)</label>
+                                <input type="number" id="discount-percentage" class="form-input" value="10" min="1" max="100" style="max-width: 150px;">
+                            </div>
+                            
+                            <div style="margin: 16px 0;">
+                                <label class="checkbox-group">
+                                    <input type="checkbox" id="discount-target-acai">
+                                    <span class="checkbox-label">Aplicar no Açaí</span>
+                                </label>
+                                <label class="checkbox-group">
+                                    <input type="checkbox" id="discount-target-sorvete">
+                                    <span class="checkbox-label">Aplicar no Sorvete</span>
+                                </label>
+                            </div>
+                            
+                            <button id="save-discount-config" class="btn btn-primary">
+                                Salvar Configuração
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Login -->
+                    <div class="card" id="login-section">
+                        <div class="card-header">
+                            <div class="card-title">🔒 Acesso Administrativo</div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Usuário</label>
+                                <input type="text" id="username" class="form-input" autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Senha</label>
+                                <input type="password" id="password" class="form-input" autocomplete="off">
+                            </div>
+                        </div>
+                        <button id="login-btn" class="btn btn-primary btn-block">Entrar</button>
+                    </div>
+
+                    <!-- Painel Admin (após login) -->
+                    <div class="card" id="admin-controls-panel" style="display: none;">
+                        <div class="card-header">
+                            <div class="card-title">⚙️ Painel Administrativo</div>
+                            <button id="logout-btn" class="btn btn-secondary btn-sm">Sair</button>
+                        </div>
+                        
+                        <div class="admin-tabs">
+                            <button class="admin-tab active" data-subtab="produtos">Produtos e Preços</button>
+                            <button class="admin-tab" data-subtab="relatorios">Relatórios</button>
+                            <button class="admin-tab" data-subtab="config">Configurações</button>
+                        </div>
+
+                        <!-- Sub-aba: Produtos e Preços -->
+                        <div class="admin-sub-content active" id="admin-produtos-content">
+                            <div class="admin-section">
+                                <h3 class="admin-section-title">Preço por KG</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Açaí (R$/kg)</label>
+                                        <input type="number" id="acai-price" class="form-input" step="0.01">
+                                        <button id="update-acai-price" class="btn btn-primary btn-sm" style="margin-top: 8px; width: 100%;">Atualizar</button>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Sorvete (R$/kg)</label>
+                                        <input type="number" id="sorvete-price" class="form-input" step="0.01">
+                                        <button id="update-sorvete-price" class="btn btn-primary btn-sm" style="margin-top: 8px; width: 100%;">Atualizar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="admin-section">
+                                <h3 class="admin-section-title">Adicionar Novo Produto</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Nome do Produto</label>
+                                        <input type="text" id="new-product-name" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Preço (R$)</label>
+                                        <input type="number" id="new-product-price" class="form-input" step="0.01">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Categoria</label>
+                                    <input type="text" id="new-product-category" class="form-input" placeholder="Ex: Bebidas, Doces">
+                                </div>
+                                <button id="add-new-product-btn" class="btn btn-primary">+ Adicionar Produto</button>
+                            </div>
+
+                            <div class="admin-section">
+                                <h3 class="admin-section-title">Gerenciar Produtos</h3>
+                                <div class="products-grid" id="products-management">
+                                    <!-- Preenchido dinamicamente -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sub-aba: Relatórios -->
+                        <div class="admin-sub-content" id="admin-relatorios-content">
+                            <div class="admin-section">
+                                <h3 class="admin-section-title">Relatório Mensal</h3>
+                                <div class="form-group" style="max-width: 300px;">
+                                    <label class="form-label">Selecione o Mês e Ano</label>
+                                    <input type="month" id="report-month-select" class="form-input">
+                                </div>
+                                <button id="generate-monthly-report-pdf" class="btn btn-primary">
+                                    📄 Gerar PDF do Mês
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sub-aba: Configurações -->
+                        <div class="admin-sub-content" id="admin-config-content">
+                            <div class="admin-section">
+                                <h3 class="admin-section-title">Senha de Exclusão</h3>
+                                <div class="form-group" style="max-width: 300px;">
+                                    <label class="form-label">Nova senha (4 dígitos)</label>
+                                    <input type="password" id="delete-password" class="form-input" maxlength="4">
+                                </div>
+                                <button id="update-delete-password" class="btn btn-primary">Atualizar Senha</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="section-card">
-                <div id="login-section">
-                    <h2 class="section-title">Acesso Restrito</h2>
-                    <div class="login-form">
-                        <input type="text" id="username" class="admin-input" placeholder="Usuário" autocomplete="off">
-                        <input type="password" id="password" class="admin-input" placeholder="Senha" autocomplete="off">
-                        <button id="login-btn" class="touch-btn btn-primary">Entrar</button>
-                    </div>
-                </div>
-
-                <div class="logged-in" id="admin-controls-panel">
-                    <div class="logged-in-header">
-                         <div class="user-info">Logado como: <span id="logged-user">Admin</span></div>
-                         <button id="logout-btn" class="touch-btn btn-secondary" style="height: auto; padding: 10px 15px;">Sair</button>
-                    </div>
-                    
-                    <div class="admin-sub-tabs">
-                        <div class="admin-sub-tab active" data-subtab="produtos">Produtos e Preços</div>
-                        <div class="admin-sub-tab" data-subtab="relatorios">Relatórios</div>
-                        <div class="admin-sub-tab" data-subtab="config">Configurações</div>
-                    </div>
-
-                    <div class="admin-sub-content active" id="admin-produtos-content">
-                        <div class="admin-section">
-                            <h3>Preço por KG</h3>
-                            <div class="admin-controls">
-                                <label for="acai-price">Açaí (R$/kg)</label>
-                                <input type="number" id="acai-price" class="admin-input" step="0.01">
-                            </div>
-                             <button id="update-acai-price" class="touch-btn btn-primary" style="width:100%; margin-bottom: 10px;">Atualizar Preço Açaí</button>
-                             
-                             <div class="admin-controls">
-                                <label for="sorvete-price">Sorvete (R$/kg)</label>
-                                <input type="number" id="sorvete-price" class="admin-input" step="0.01">
-                            </div>
-                             <button id="update-sorvete-price" class="touch-btn btn-primary" style="width:100%; margin-bottom: 10px;">Atualizar Preço Sorvete</button>
-                        </div>
-                        <div class="admin-section">
-                            <h3>Adicionar Novo Produto</h3>
-                            <div id="add-product-form" class="admin-controls" style="grid-template-columns: 1fr; gap: 10px;">
-                                <input type="text" id="new-product-name" class="admin-input" placeholder="Nome do Produto">
-                                <input type="number" id="new-product-price" class="admin-input" placeholder="Preço (R$)">
-                                <input type="text" id="new-product-category" class="admin-input" placeholder="Categoria (ex: Bebidas, Doces)">
-                                <button id="add-new-product-btn" class="touch-btn btn-primary" style="width:100%;">Adicionar Produto</button>
-                            </div>
-                        </div>
-                        <div class="admin-section">
-                            <h3>Gerenciar Produtos da Vitrine</h3>
-                            <div class="products-management-grid" id="products-management"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-sub-content" id="admin-relatorios-content">
-                        <div class="admin-section">
-                            <h3>Relatório Mensal</h3>
-                            <div class="admin-controls" style="grid-template-columns: 1fr; gap: 10px;">
-                                <label for="report-month-select">Selecione o Mês e Ano:</label>
-                                <input type="month" id="report-month-select" class="admin-input">
-                                <button id="generate-monthly-report-pdf" class="touch-btn btn-primary" style="width:100%;">Gerar PDF do Mês</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="admin-sub-content" id="admin-config-content">
-                        <div class="admin-section">
-                            <h3>Senha de Exclusão</h3>
-                            <div class="admin-controls">
-                                <label for="delete-password">Nova senha (4 dígitos)</label>
-                                <input type="password" id="delete-password" class="admin-input" maxlength="4">
-                            </div>
-                             <button id="update-delete-password" class="touch-btn btn-primary" style="width:100%;">Atualizar Senha</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </main>
     </div>
+
+    <!-- MODALS -->
     
+    <!-- Modal: Senha para Exclusão -->
     <div class="modal" id="password-modal">
         <div class="modal-content">
-            <h3>Excluir Item</h3>
-            <p>Digite a senha para confirmar a exclusão:</p>
-            <input type="password" class="password-input" id="confirm-delete-password" maxlength="4" placeholder="Senha">
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="confirm-delete" class="touch-btn btn-danger" style="flex: 1;">Confirmar</button>
-                <button id="cancel-delete" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            <div class="modal-header">
+                <h3 class="modal-title">Excluir Item</h3>
+            </div>
+            <div class="modal-body">
+                <p>Digite a senha para confirmar a exclusão:</p>
+                <input type="password" class="form-input" id="confirm-delete-password" maxlength="4" placeholder="Senha">
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-delete" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-delete" class="btn btn-danger">Confirmar</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal: Recibo -->
     <div class="modal" id="receipt-modal">
         <div class="modal-content">
-            <h3>Venda Finalizada</h3>
-            <div id="receipt-content"></div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="print-receipt-btn" class="touch-btn btn-success" style="flex: 1;">Imprimir Recibo</button>
-                <button id="close-receipt-btn" class="touch-btn btn-secondary" style="flex: 1;">Fechar</button>
+            <div class="modal-header">
+                <h3 class="modal-title">Venda Finalizada</h3>
+            </div>
+            <div class="modal-body">
+                <div id="receipt-content" style="font-family: 'Courier New', monospace; white-space: pre-wrap; background: #f9f9f9; padding: 20px; border-radius: 8px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-receipt-btn" class="btn btn-secondary">Fechar</button>
+                <button id="print-receipt-btn" class="btn btn-success">Imprimir Recibo</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal: Venda Manual -->
     <div class="modal" id="manual-sale-modal">
         <div class="modal-content">
-            <h3>Adicionar Venda Manual</h3>
-            <div class="modal-body" id="manual-sale-form">
-                <div class="admin-controls" style="grid-template-columns: 1fr; text-align: left;">
-                    <label for="manual-product-select">Selecionar Produto:</label>
-                    <select id="manual-product-select" class="admin-input"></select>
+            <div class="modal-header">
+                <h3 class="modal-title">Adicionar Venda Manual</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Selecionar Produto</label>
+                    <select id="manual-product-select" class="form-input"></select>
                 </div>
-                <div class="admin-controls" id="manual-acai-weight-section" style="display: none; grid-template-columns: 1fr; text-align: left;">
-                    <label for="manual-acai-weight">Peso em Gramas:</label>
-                    <input type="number" id="manual-acai-weight" class="admin-input" placeholder="Gramas">
+                
+                <div class="form-group" id="manual-acai-weight-section" style="display: none;">
+                    <label class="form-label">Peso em Gramas</label>
+                    <input type="number" id="manual-acai-weight" class="form-input" placeholder="Gramas">
                 </div>
-                <button id="manual-add-item-btn" class="touch-btn btn-primary" style="width: 100%; margin: 10px 0; height: 50px;">Adicionar Item</button>
-
-                <h4>Itens da Venda</h4>
-                <div class="cart-items" id="manual-sale-cart-items" style="max-height: 150px;">
-                    <div class="empty-state">Nenhum item</div>
+                
+                <button id="manual-add-item-btn" class="btn btn-primary btn-block">Adicionar Item</button>
+                
+                <h4 style="margin: 20px 0 10px; font-size: 14px; font-weight: 600;">Itens da Venda</h4>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-300); border-radius: 8px; padding: 10px; margin-bottom: 16px;" id="manual-sale-cart-items">
+                    <div class="empty-state" style="padding: 20px;">Nenhum item</div>
                 </div>
-                 <div class="cart-summary" id="manual-sale-summary" style="display: none;">
+                
+                <div class="cart-summary" id="manual-sale-summary" style="display: none;">
                     <div class="summary-row total">
                         <span>Total:</span>
                         <span id="manual-sale-total">R$ 0,00</span>
                     </div>
                 </div>
-
-                <h4>Pagamento</h4>
+                
+                <h4 style="margin: 20px 0 10px; font-size: 14px; font-weight: 600;">Pagamento</h4>
                 <div class="payment-options" id="manual-payment-options">
-                    <div class="payment-option" data-method="cash" style="padding: 10px;"><i>💵</i></div>
-                    <div class="payment-option" data-method="card" style="padding: 10px;"><i>💳</i></div>
-                    <div class="payment-option" data-method="pix" style="padding: 10px;"><i>📱</i></div>
+                    <div class="payment-option" data-method="cash" style="padding: 12px;">
+                        <span class="payment-icon" style="font-size: 24px;">💵</span>
+                        <span class="payment-label" style="font-size: 13px;">Dinheiro</span>
+                    </div>
+                    <div class="payment-option" data-method="card" style="padding: 12px;">
+                        <span class="payment-icon" style="font-size: 24px;">💳</span>
+                        <span class="payment-label" style="font-size: 13px;">Cartão</span>
+                    </div>
+                    <div class="payment-option" data-method="pix" style="padding: 12px;">
+                        <span class="payment-icon" style="font-size: 24px;">📱</span>
+                        <span class="payment-label" style="font-size: 13px;">PIX</span>
+                    </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="save-manual-sale-btn" class="touch-btn btn-success" style="flex: 1;">Salvar Venda</button>
-                <button id="close-manual-sale-btn" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            <div class="modal-footer">
+                <button id="close-manual-sale-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="save-manual-sale-btn" class="btn btn-success">Salvar Venda</button>
             </div>
         </div>
     </div>
-    
+
+    <!-- Modal: Pagamento Posterior (Comanda) -->
     <div class="modal" id="hold-sale-modal">
         <div class="modal-content">
-            <h3>Pagamento Posterior</h3>
+            <div class="modal-header">
+                <h3 class="modal-title">Pagamento Posterior</h3>
+            </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="customer-name">Nome do Cliente (para identificação)</label>
-                    <input type="text" id="customer-name" class="admin-input" placeholder="Ex: Mesa 02, João, etc.">
+                    <label class="form-label">Nome do Cliente (para identificação)</label>
+                    <input type="text" id="customer-name" class="form-input" placeholder="Ex: Mesa 02, João, etc.">
                 </div>
                 <div class="form-group">
-                    <label for="existing-order-select">Adicionar a uma comanda existente?</label>
-                    <select id="existing-order-select" class="admin-input">
+                    <label class="form-label">Adicionar a uma comanda existente?</label>
+                    <select id="existing-order-select" class="form-input">
                         <option value="new">Salvar como nova comanda</option>
                     </select>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="save-hold-sale-btn" class="touch-btn btn-success" style="flex: 1;">Salvar Comanda</button>
-                <button id="close-hold-sale-btn" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            <div class="modal-footer">
+                <button id="close-hold-sale-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="save-hold-sale-btn" class="btn btn-success">Salvar Comanda</button>
             </div>
         </div>
     </div>
-    
+
+    <!-- Modal: Finalizar Comanda -->
     <div class="modal" id="open-order-modal">
-        <div class="modal-content">
-            <h3 id="open-order-title">Finalizar Comanda</h3>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="open-order-title">Finalizar Comanda</h3>
+            </div>
             <div class="modal-body">
-                <div class="order-timer" id="open-order-timer">Tempo em aberto: 00:00</div>
-                
-                <h4>Itens da Comanda</h4>
-                <div class="open-order-items" id="open-order-items-list">
+                <div style="background: var(--gray-100); padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 12px; color: var(--gray-600); margin-bottom: 4px;">Tempo em aberto</div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--danger);" id="open-order-timer">00:00</div>
                 </div>
                 
-                <div class="cart-summary" style="margin-top: 0;">
+                <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Itens da Comanda</h4>
+                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px; margin-bottom: 16px;" id="open-order-items-list">
+                </div>
+                
+                <div class="cart-summary">
                     <div class="summary-row total">
                         <span>Total:</span>
                         <span id="open-order-total">R$ 0,00</span>
                     </div>
                 </div>
                 
-                <div class="payment-section" style="margin-top: 15px;">
-                    <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 10px;">Forma de Pagamento</h2>
-                    <div class="payment-options" id="open-order-payment-options">
-                        <div class="payment-option" data-method="cash"><i>💵</i><div>Dinheiro</div></div>
-                        <div class="payment-option" data-method="card"><i>💳</i><div>Cartão</div></div>
-                        <div class="payment-option" data-method="pix"><i>📱</i><div>PIX</div></div>
+                <h4 style="margin: 20px 0 12px; font-size: 14px; font-weight: 600;">Forma de Pagamento</h4>
+                <div class="payment-options" id="open-order-payment-options">
+                    <div class="payment-option" data-method="cash">
+                        <span class="payment-icon">💵</span>
+                        <span class="payment-label">Dinheiro</span>
                     </div>
-                    <div class="cash-input" id="open-order-cash-input">
-                        <input type="number" id="open-order-cash-received" placeholder="Valor recebido em R$">
-                        <div class="change-display" id="open-order-change-display">
-                            Troco: R$ <span id="open-order-change-amount">0,00</span>
-                        </div>
+                    <div class="payment-option" data-method="card">
+                        <span class="payment-icon">💳</span>
+                        <span class="payment-label">Cartão</span>
+                    </div>
+                    <div class="payment-option" data-method="pix">
+                        <span class="payment-icon">📱</span>
+                        <span class="payment-label">PIX</span>
+                    </div>
+                </div>
+                
+                <div class="cash-section" id="open-order-cash-input">
+                    <label class="input-label">Valor Recebido</label>
+                    <input type="number" id="open-order-cash-received" class="cash-received-input" placeholder="R$ 0,00">
+                    <div class="change-display" id="open-order-change-display">
+                        <div class="change-label">Troco</div>
+                        <div class="change-amount">R$ <span id="open-order-change-amount">0,00</span></div>
                     </div>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="confirm-open-order-payment" class="touch-btn btn-success" style="flex: 1;">Confirmar Pagamento</button>
-                <button id="close-open-order-btn" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            <div class="modal-footer">
+                <button id="close-open-order-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-open-order-payment" class="btn btn-success">Confirmar Pagamento</button>
             </div>
         </div>
     </div>
-    
+
+    <!-- Modal: Fechamento de Caixa -->
     <div class="modal" id="close-register-modal">
         <div class="modal-content">
-            <h3>Fechamento de Caixa</h3>
+            <div class="modal-header">
+                <h3 class="modal-title">Fechamento de Caixa</h3>
+            </div>
             <div class="modal-body">
-                <p style="margin-bottom: 15px; font-size: 0.9rem; color: #555;">Preencha as informações abaixo para finalizar o expediente (opcional).</p>
+                <p style="margin-bottom: 20px; color: var(--gray-600); font-size: 14px;">
+                    Preencha as informações abaixo para finalizar o expediente (opcional).
+                </p>
                 
                 <div class="form-group">
-                    <label for="closing-balance-input">Saldo em Gaveta (Contagem Física)</label>
-                    <input type="number" id="closing-balance-input" class="admin-input" placeholder="R$ 0.00" step="0.01">
+                    <label class="form-label">Saldo em Gaveta (Contagem Física)</label>
+                    <input type="number" id="closing-balance-input" class="form-input" placeholder="R$ 0.00" step="0.01">
                 </div>
                 
                 <div class="form-group">
-                    <label for="closing-observation-input">Observações</label>
-                    <textarea id="closing-observation-input" class="admin-input" style="height: 100px; resize: none;" placeholder="Ex: Quebra de caixa, retirada para almoço..."></textarea>
+                    <label class="form-label">Observações</label>
+                    <textarea id="closing-observation-input" class="form-input" style="height: 100px; resize: vertical;" placeholder="Ex: Quebra de caixa, retirada para almoço..."></textarea>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="btn-confirm-close-register" class="touch-btn btn-danger" style="flex: 1;">Confirmar Fechamento</button>
-                <button id="btn-cancel-close-register" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            <div class="modal-footer">
+                <button id="btn-cancel-close-register" class="btn btn-secondary">Cancelar</button>
+                <button id="btn-confirm-close-register" class="btn btn-danger">Confirmar Fechamento</button>
             </div>
         </div>
     </div>
-    
+
+    <!-- Notificações -->
     <div id="notification" class="notification"></div>
 
     <script src="app.js"></script>
