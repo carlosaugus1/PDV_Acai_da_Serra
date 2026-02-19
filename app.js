@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
             manualSaleCart: [],
             salesHistory: {},
             expenses: {}, 
+            cashRegister: {}, 
             openOrders: [], 
             products: [
                 { id: 1, name: "Água", price: 3.00, category: "Bebidas", image: "" }, 
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.render.all();
             this.render.discountControls();
             this.render.activeDiscountIndicator();
+            this.render.cashRegister(); 
         },
 
         checkThursdayDiscount() {
@@ -92,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyExpensesTotal: document.getElementById('history-expenses-total'),
                 historyGrandTotal: document.getElementById('history-grand-total'),
                 
-                // Novos elementos para totais por pagamento
                 historyCashTotal: document.getElementById('history-cash-total'),
                 historyCardTotal: document.getElementById('history-card-total'),
                 historyPixTotal: document.getElementById('history-pix-total'),
@@ -168,6 +169,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveDiscountConfigBtn: document.getElementById('save-discount-config'),
                 discountBalloon: document.getElementById('discount-balloon'),
                 discountDetails: document.getElementById('discount-details'),
+
+                // Elementos do Caixa
+                cashRegisterOpening: document.getElementById('cash-register-opening'),
+                cashRegisterDashboard: document.getElementById('cash-register-dashboard'),
+                openingBillsInput: document.getElementById('opening-bills'),
+                openingCoinsInput: document.getElementById('opening-coins'),
+                openingTotalDisplay: document.getElementById('opening-total-display'),
+                btnOpenRegister: document.getElementById('btn-open-register'),
+                btnCloseRegister: document.getElementById('btn-close-register'),
+                
+                dashOpeningBalance: document.getElementById('dash-opening-balance'),
+                dashCashSales: document.getElementById('dash-cash-sales'),
+                dashExpenses: document.getElementById('dash-expenses'),
+                dashCurrentBalance: document.getElementById('dash-current-balance'),
+                dashCardTotal: document.getElementById('dash-card-total'),
+                dashPixTotal: document.getElementById('dash-pix-total'),
+
+                // Novos Elementos Modal Fechamento
+                closeRegisterModal: document.getElementById('close-register-modal'),
+                closingBalanceInput: document.getElementById('closing-balance-input'),
+                closingObservationInput: document.getElementById('closing-observation-input'),
+                btnConfirmCloseRegister: document.getElementById('btn-confirm-close-register'),
+                btnCancelCloseRegister: document.getElementById('btn-cancel-close-register'),
             };
         },
 
@@ -215,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.target.matches('#manual-sale-cart-items .btn-remove')) this.handlers.removeManualItem(e.target.dataset.index);
                 if (e.target.matches('.sales-history .delete-sale')) this.handlers.requestDeleteSale(e.target);
                 
-                // Seletor corrigido para garantir que o clique no botão de excluir despesa funcione
                 if (e.target.matches('.delete-expense')) this.handlers.requestDeleteExpense(e.target);
                 
                 if (e.target.matches('.sales-history .reprint-sale')) {
@@ -253,6 +276,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.DOM.discountActiveCheck.addEventListener('change', (e) => this.handlers.toggleDiscountConfig(e));
             this.DOM.saveDiscountConfigBtn.addEventListener('click', () => this.handlers.saveDiscountConfig());
+
+            // Listeners do Caixa
+            this.DOM.openingBillsInput.addEventListener('input', () => this.handlers.calculateOpeningTotal());
+            this.DOM.openingCoinsInput.addEventListener('input', () => this.handlers.calculateOpeningTotal());
+            this.DOM.btnOpenRegister.addEventListener('click', () => this.handlers.openRegister());
+            
+            // Listeners Modificados para Fechamento
+            this.DOM.btnCloseRegister.addEventListener('click', () => this.handlers.openCloseRegisterModal());
+            this.DOM.btnConfirmCloseRegister.addEventListener('click', () => this.handlers.confirmCloseRegister());
+            this.DOM.btnCancelCloseRegister.addEventListener('click', () => {
+                this.DOM.closeRegisterModal.style.display = 'none';
+                this.DOM.closingBalanceInput.value = '';
+                this.DOM.closingObservationInput.value = '';
+            });
         },
 
         handlers: {
@@ -265,6 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (tabName === 'despesas') {
                     App.DOM.expenseDate.value = App.state.ui.today;
                     App.render.expenses(App.state.ui.today);
+                }
+                if (tabName === 'caixa') {
+                    App.render.cashRegister();
                 }
             },
             switchAdminSubTab(subTabName) {
@@ -314,6 +354,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 App.render.activeDiscountIndicator();
                 App.utils.showNotification(isActive ? 'Promoção ativada!' : 'Promoção desativada.', 'success');
+            },
+
+            // Lógica de Caixa
+            calculateOpeningTotal() {
+                const bills = parseFloat(App.DOM.openingBillsInput.value) || 0;
+                const coins = parseFloat(App.DOM.openingCoinsInput.value) || 0;
+                App.DOM.openingTotalDisplay.textContent = `R$ ${(bills + coins).toFixed(2)}`;
+            },
+
+            openRegister() {
+                const bills = parseFloat(App.DOM.openingBillsInput.value) || 0;
+                const coins = parseFloat(App.DOM.openingCoinsInput.value) || 0;
+                const total = bills + coins;
+
+                if (total <= 0) {
+                     if (!confirm('O valor de abertura está zerado. Deseja abrir o caixa assim mesmo?')) return;
+                }
+
+                const today = App.state.ui.today;
+                App.state.cashRegister[today] = {
+                    status: 'open',
+                    openingTime: new Date().toLocaleString('pt-BR'),
+                    bills: bills,
+                    coins: coins,
+                    totalOpening: total
+                };
+
+                App.storage.saveCashRegister();
+                App.render.cashRegister();
+                App.utils.showNotification('Caixa aberto com sucesso!', 'success');
+                
+                // Limpar campos
+                App.DOM.openingBillsInput.value = '';
+                App.DOM.openingCoinsInput.value = '';
+                App.DOM.openingTotalDisplay.textContent = 'R$ 0,00';
+            },
+
+            // Abre o modal de fechamento
+            openCloseRegisterModal() {
+                App.DOM.closeRegisterModal.style.display = 'flex';
+                App.DOM.closingBalanceInput.focus();
+            },
+
+            // Confirma o fechamento com os novos dados
+            confirmCloseRegister() {
+                const today = App.state.ui.today;
+                const closingBalance = App.DOM.closingBalanceInput.value ? parseFloat(App.DOM.closingBalanceInput.value) : null;
+                const observation = App.DOM.closingObservationInput.value;
+
+                if (App.state.cashRegister[today]) {
+                    App.state.cashRegister[today].status = 'closed';
+                    App.state.cashRegister[today].closingTime = new Date().toLocaleString('pt-BR');
+                    
+                    // Salva os dados opcionais
+                    App.state.cashRegister[today].closingBalance = closingBalance;
+                    App.state.cashRegister[today].observation = observation;
+
+                    App.storage.saveCashRegister();
+                    
+                    // Gera o relatório
+                    this.exportHistoryToPDF();
+                    
+                    App.render.cashRegister();
+                    App.utils.showNotification('Caixa fechado com sucesso.', 'success');
+                }
+                
+                // Fecha modal e limpa
+                App.DOM.closeRegisterModal.style.display = 'none';
+                App.DOM.closingBalanceInput.value = '';
+                App.DOM.closingObservationInput.value = '';
             },
 
             selectWeightedProduct(type) {
@@ -822,7 +932,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.DOM.confirmDeletePasswordInput.focus();
             },
             
-            // MODIFICADO: Exclui despesas diretamente, sem senha, apenas com confirmação
             requestDeleteExpense(target) {
                 const id = parseInt(target.dataset.id);
                 const date = target.dataset.date;
@@ -865,7 +974,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 App.DOM.passwordModal.style.display = 'none';
                 App.DOM.confirmDeletePasswordInput.value = '';
                 App.state.ui.saleToDelete = null;
-                // expenseToDelete não é mais usado no modal
             },
             
             reprintSale(target) {
@@ -951,9 +1059,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const date = App.DOM.historyDate.value;
                 const salesForDate = App.state.salesHistory[date] || [];
                 const expensesForDate = App.state.expenses[date] || []; 
-                
-                if (salesForDate.length === 0 && expensesForDate.length === 0) { 
-                    return App.utils.showNotification('Nenhuma venda ou despesa para exportar nesta data.', 'warning');
+                const cashRegister = App.state.cashRegister[date]; 
+
+                if (salesForDate.length === 0 && expensesForDate.length === 0 && !cashRegister) { 
+                    return App.utils.showNotification('Nenhum dado para exportar nesta data.', 'warning');
                 }
                 
                 const { jsPDF } = window.jspdf;
@@ -965,11 +1074,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.text(`Relatório Diário - ${formattedDate}`, 14, finalY);
                 finalY += 10;
                 
+                // --- SEÇÃO DE ABERTURA DE CAIXA ---
+                if (cashRegister) {
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(14, finalY, 180, 25, 'F');
+                    doc.setFontSize(14);
+                    doc.text('Abertura de Caixa', 18, finalY + 8);
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Hora: ${cashRegister.openingTime}`, 18, finalY + 16);
+                    doc.text(`Status: ${cashRegister.status === 'open' ? 'Aberto' : 'Fechado (' + (cashRegister.closingTime || '-') + ')'}`, 100, finalY + 16);
+                    
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`Fundo Inicial: R$ ${cashRegister.totalOpening.toFixed(2)}`, 18, finalY + 22);
+                    doc.setFont(undefined, 'normal');
+                    
+                    finalY += 35;
+                }
+                // ----------------------------------
+
                 let totalGeral = 0;
                 let totalProdutos = 0;
                 let totalEntregas = 0;
                 let totalDespesas = 0; 
-                let pagamentos = { cash: 0, card: 0, pix: 0 }; // Inicializa contadores
+                let pagamentos = { cash: 0, card: 0, pix: 0 }; 
+                let trocoTotal = 0;
                 
                 if (salesForDate.length > 0) {
                     doc.setFontSize(14);
@@ -1000,6 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let paymentString = App.utils.getPaymentMethodName(sale.paymentMethod);
                         if (sale.paymentMethod === 'cash' && sale.change > 0) {
                             paymentString += `\n(Troco: R$ ${sale.change.toFixed(2)})`;
+                            trocoTotal += sale.change;
                         }
 
                         const saleData = [
@@ -1014,7 +1145,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         totalProdutos += valorProdutos;
                         totalEntregas += taxaEntrega;
 
-                        // Soma aos totais por pagamento
                         if (pagamentos.hasOwnProperty(sale.paymentMethod)) {
                             pagamentos[sale.paymentMethod] += sale.total;
                         }
@@ -1051,7 +1181,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             expense.date.split(' ')[1],
                             expense.name,
                             expense.description || '-',
-                            // Valor Positivo
                             `R$ ${expense.value.toFixed(2)}`
                         ]);
                         totalDespesas += expense.value;
@@ -1074,29 +1203,126 @@ document.addEventListener('DOMContentLoaded', () => {
                     finalY = doc.lastAutoTable.finalY;
                 }
                 
+                // --- RESUMO FINANCEIRO ---
                 finalY += 10;
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'normal');
-                doc.text(`Total em Produtos: R$ ${totalProdutos.toFixed(2)}`, 14, finalY);
-                doc.text(`Total em Entregas: R$ ${totalEntregas.toFixed(2)}`, 14, finalY + 5);
-                
-                // Adicionando o resumo por Pagamento no PDF
-                finalY += 10;
-                doc.text(`Total por Pagamento:`, 14, finalY);
-                finalY += 5;
-                doc.text(`Dinheiro: R$ ${pagamentos.cash.toFixed(2)}`, 20, finalY);
-                doc.text(`Cartão: R$ ${pagamentos.card.toFixed(2)}`, 20, finalY + 5);
-                doc.text(`PIX: R$ ${pagamentos.pix.toFixed(2)}`, 20, finalY + 10);
-                finalY += 15;
+                doc.setFontSize(14);
+                doc.text("Resumo Financeiro", 14, finalY);
+                finalY += 8;
 
-                doc.setTextColor(220, 53, 69); 
-                doc.text(`Total em Despesas: R$ ${totalDespesas.toFixed(2)}`, 14, finalY);
-                doc.setTextColor(0, 0, 0); 
+                if (cashRegister) {
+                    const saldoEmGaveta = cashRegister.totalOpening + pagamentos.cash - totalDespesas;
+                    
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`Fundo Inicial (Abertura):`, 14, finalY);
+                    doc.text(`R$ ${cashRegister.totalOpening.toFixed(2)}`, 100, finalY, { align: 'right' });
+                    finalY += 5;
+                    
+                    doc.text(`(+) Vendas em Dinheiro:`, 14, finalY);
+                    doc.text(`R$ ${pagamentos.cash.toFixed(2)}`, 100, finalY, { align: 'right' });
+                    finalY += 5;
+                    
+                    doc.text(`(-) Despesas (Saídas):`, 14, finalY);
+                    doc.text(`R$ ${totalDespesas.toFixed(2)}`, 100, finalY, { align: 'right' });
+                    finalY += 6;
+                    
+                    doc.setFont(undefined, 'bold');
+                    doc.line(14, finalY, 100, finalY);
+                    finalY += 5;
+                    doc.text(`= SALDO ESPERADO:`, 14, finalY);
+                    doc.text(`R$ ${saldoEmGaveta.toFixed(2)}`, 100, finalY, { align: 'right' });
+                    
+                    // Se houver saldo de fechamento informado
+                    if (cashRegister.closingBalance !== undefined && cashRegister.closingBalance !== null) {
+                         finalY += 10;
+                         doc.setFontSize(11);
+                         doc.text(`CONFERÊNCIA DE FECHAMENTO`, 14, finalY);
+                         finalY += 6;
+                         
+                         doc.setFontSize(10);
+                         doc.setFont(undefined, 'normal');
+                         doc.text(`Saldo Informado:`, 14, finalY);
+                         doc.text(`R$ ${parseFloat(cashRegister.closingBalance).toFixed(2)}`, 100, finalY, { align: 'right' });
+                         
+                         const diff = parseFloat(cashRegister.closingBalance) - saldoEmGaveta;
+                         let diffText = "Sem Diferença";
+                         let diffColor = [0, 0, 0];
+                         
+                         if (diff > 0.01) {
+                             diffText = "SOBRA: R$ " + diff.toFixed(2);
+                             diffColor = [0, 128, 0]; // Verde
+                         } else if (diff < -0.01) {
+                             diffText = "FALTA: R$ " + Math.abs(diff).toFixed(2);
+                             diffColor = [220, 53, 69]; // Vermelho
+                         }
+                         
+                         finalY += 6;
+                         doc.setTextColor(diffColor[0], diffColor[1], diffColor[2]);
+                         doc.setFont(undefined, 'bold');
+                         doc.text(diffText, 14, finalY);
+                         doc.setTextColor(0, 0, 0);
+                    }
+
+                    // Se houver observações
+                    if (cashRegister.observation) {
+                        finalY += 10;
+                        doc.setFontSize(10);
+                        doc.setFont(undefined, 'bold');
+                        doc.text("Observações:", 14, finalY);
+                        finalY += 5;
+                        doc.setFont(undefined, 'normal');
+                        // Split text para não vazar a margem
+                        const splitObs = doc.splitTextToSize(cashRegister.observation, 180);
+                        doc.text(splitObs, 14, finalY);
+                        finalY += (splitObs.length * 5);
+                    }
+
+                } else {
+                     doc.setFontSize(10);
+                     doc.text("Caixa não foi aberto formalmente neste dia.", 14, finalY);
+                }
+
+                // Resumo Faturamento (Coluna direita)
+                // Se o finalY cresceu muito por causa das obs, reseta ou ajusta
+                if (finalY > 250) {
+                     doc.addPage();
+                     finalY = 20;
+                } else {
+                     // Tenta alinhar mais ou menos onde estava antes, mas cuidado para não sobrescrever
+                     // Se finalY estiver muito baixo, melhor apenas continuar abaixo
+                     if (finalY < 180) finalY = Math.max(finalY, 180); // Força um mínimo para não colar
+                     else finalY += 10;
+                }
+
+                const rightColX = 120;
+                // Vamos imprimir faturamento sempre um pouco separado ou abaixo se não couber ao lado
+                // Simplificação: Imprimir abaixo para garantir que não sobreponha observações longas
                 
-                // Saldo do Dia = Receita Bruta
+                finalY += 10;
                 doc.setFontSize(12);
                 doc.setFont(undefined, 'bold');
-                doc.text(`Total de Vendas do Dia: R$ ${totalGeral.toFixed(2)}`, 14, finalY + 7);
+                doc.text("Faturamento Total do Dia", 14, finalY);
+                finalY += 8;
+                doc.setFontSize(10);
+                
+                doc.setFont(undefined, 'normal');
+                doc.text(`Total Cartão:`, 14, finalY);
+                doc.text(`R$ ${pagamentos.card.toFixed(2)}`, 80, finalY, { align: 'right' });
+                finalY += 5;
+                
+                doc.text(`Total PIX:`, 14, finalY);
+                doc.text(`R$ ${pagamentos.pix.toFixed(2)}`, 80, finalY, { align: 'right' });
+                finalY += 5;
+                
+                doc.text(`Total Entregas:`, 14, finalY);
+                doc.text(`R$ ${totalEntregas.toFixed(2)}`, 80, finalY, { align: 'right' });
+                finalY += 6;
+
+                doc.setFont(undefined, 'bold');
+                doc.line(14, finalY, 80, finalY);
+                finalY += 5;
+                doc.text(`FATURAMENTO BRUTO:`, 14, finalY);
+                doc.text(`R$ ${totalGeral.toFixed(2)}`, 80, finalY, { align: 'right' });
 
                 doc.save(`relatorio_diario_${date}.pdf`);
                 App.utils.showNotification('PDF diário gerado com sucesso!', 'success');
@@ -1362,6 +1588,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.openOrdersGrid();
                 this.deliveryMode(); 
             },
+            
+            cashRegister() {
+                const today = App.state.ui.today;
+                const register = App.state.cashRegister[today];
+                
+                if (!register || register.status !== 'open') {
+                    App.DOM.cashRegisterOpening.style.display = 'block';
+                    App.DOM.cashRegisterDashboard.style.display = 'none';
+                    if(register && register.status === 'closed') {
+                         // Caixa fechado
+                    }
+                } else {
+                    App.DOM.cashRegisterOpening.style.display = 'none';
+                    App.DOM.cashRegisterDashboard.style.display = 'block';
+                    
+                    const salesForDate = App.state.salesHistory[today] || [];
+                    const expensesForDate = App.state.expenses[today] || [];
+                    
+                    let cashSales = 0;
+                    let cardTotal = 0;
+                    let pixTotal = 0;
+                    let totalExpenses = 0;
+                    
+                    salesForDate.forEach(sale => {
+                        if (sale.paymentMethod === 'cash') cashSales += sale.total;
+                        if (sale.paymentMethod === 'card') cardTotal += sale.total;
+                        if (sale.paymentMethod === 'pix') pixTotal += sale.total;
+                    });
+                    
+                    expensesForDate.forEach(exp => totalExpenses += exp.value);
+                    
+                    const openingBalance = register.totalOpening;
+                    const currentDrawerBalance = openingBalance + cashSales - totalExpenses;
+                    
+                    App.DOM.dashOpeningBalance.textContent = `R$ ${openingBalance.toFixed(2)}`;
+                    App.DOM.dashCashSales.textContent = `R$ ${cashSales.toFixed(2)}`;
+                    App.DOM.dashExpenses.textContent = `R$ ${totalExpenses.toFixed(2)}`;
+                    App.DOM.dashCurrentBalance.textContent = `R$ ${currentDrawerBalance.toFixed(2)}`;
+                    
+                    App.DOM.dashCardTotal.textContent = `R$ ${cardTotal.toFixed(2)}`;
+                    App.DOM.dashPixTotal.textContent = `R$ ${pixTotal.toFixed(2)}`;
+                }
+            },
+
             discountControls() {
                 const { active, percentage, targets } = App.state.discount;
                 App.DOM.discountActiveCheck.checked = active;
@@ -1491,7 +1761,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     salesHistory, historySummary, 
                     historyProductsTotal, historyDeliveryTotal, 
                     historyExpensesTotal, historyGrandTotal,
-                    historyCashTotal, historyCardTotal, historyPixTotal // Elementos adicionados
+                    historyCashTotal, historyCardTotal, historyPixTotal 
                 } = App.DOM;
                 
                 salesHistory.innerHTML = '';
@@ -1503,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let totalProdutos = 0;
                 let totalEntregas = 0;
                 let totalDespesas = 0; 
-                let pagamentos = { cash: 0, card: 0, pix: 0 }; // Inicializa contadores
+                let pagamentos = { cash: 0, card: 0, pix: 0 }; 
 
                 if (salesForDate.length === 0 && expensesForDate.length === 0) {
                     salesHistory.innerHTML = '<div class="empty-state">Nenhuma venda para esta data</div>';
@@ -1522,7 +1792,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalProdutos += valorProdutos;
                     totalEntregas += taxaEntrega;
 
-                    // Soma aos totais por pagamento
                     if (pagamentos.hasOwnProperty(sale.paymentMethod)) {
                         pagamentos[sale.paymentMethod] += sale.total;
                     }
@@ -1585,6 +1854,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyExpensesTotal.textContent = `R$ ${totalDespesas.toFixed(2)}`; 
                 historyGrandTotal.textContent = `R$ ${saldoDia.toFixed(2)}`; 
                 historySummary.style.display = 'block';
+
+                // Atualiza também a aba de caixa se estivermos vendo a data de hoje
+                if (date === App.state.ui.today) {
+                    this.cashRegister();
+                }
             },
             
             expenses(date) {
@@ -1839,6 +2113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sorvetePrice = localStorage.getItem('sorvetePricePerKg'); 
                 const deletePassword = localStorage.getItem('deletePassword');
                 const openOrders = localStorage.getItem('openOrders'); 
+                const cashRegister = localStorage.getItem('cashRegister'); 
                 
                 if(salesHistory) App.state.salesHistory = JSON.parse(salesHistory);
                 if(expenses) App.state.expenses = JSON.parse(expenses); 
@@ -1847,6 +2122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(sorvetePrice) App.state.config.sorvetePricePerKg = parseFloat(sorvetePrice);
                 if(deletePassword) App.state.config.deletePassword = deletePassword;
                 if(openOrders) App.state.openOrders = JSON.parse(openOrders); 
+                if(cashRegister) App.state.cashRegister = JSON.parse(cashRegister);
             },
             saveSalesHistory() {
                 localStorage.setItem('salesHistory', JSON.stringify(App.state.salesHistory));
@@ -1864,6 +2140,9 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             saveOpenOrders() { 
                 localStorage.setItem('openOrders', JSON.stringify(App.state.openOrders));
+            },
+            saveCashRegister() { 
+                localStorage.setItem('cashRegister', JSON.stringify(App.state.cashRegister));
             }
         }
     };

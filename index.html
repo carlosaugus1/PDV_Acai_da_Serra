@@ -20,6 +20,7 @@
         </header>
         
         <div class="tabs">
+            <div class="tab" data-tab="caixa">🏪 <span>Caixa</span></div>
             <div class="tab active" data-tab="venda">🛒 <span>Venda</span></div>
             <div class="tab" data-tab="produtos">🍦 <span>Produtos</span></div>
             <div class="tab" data-tab="comandas">
@@ -31,8 +32,83 @@
             <div class="tab" data-tab="admin">⚙️ <span>Administrativo</span></div>
         </div>
         
+        <div class="tab-content" id="caixa-tab">
+            <div id="cash-register-opening" class="section-card" style="display: none;">
+                <h2 class="section-title">Abertura de Caixa</h2>
+                <p style="margin-bottom: 15px; color: #666;">Informe os valores disponíveis na gaveta para iniciar o expediente.</p>
+                
+                <div class="admin-controls" style="grid-template-columns: 1fr; gap: 15px;">
+                    <div>
+                        <label for="opening-bills">Total em Cédulas (R$)</label>
+                        <input type="number" id="opening-bills" class="admin-input" placeholder="0.00" step="0.01">
+                    </div>
+                    <div>
+                        <label for="opening-coins">Total em Moedas (R$)</label>
+                        <input type="number" id="opening-coins" class="admin-input" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="cart-summary" style="margin-top: 20px;">
+                    <div class="summary-row total">
+                        <span>Fundo Total:</span>
+                        <span id="opening-total-display">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <button id="btn-open-register" class="touch-btn btn-success" style="width: 100%; margin-top: 15px;">Confirmar Abertura</button>
+            </div>
+
+            <div id="cash-register-dashboard" class="section-card" style="display: none;">
+                <h2 class="section-title">
+                    <span>Controle de Caixa</span>
+                    <span class="status-badge open">ABERTO</span>
+                </h2>
+                
+                <div class="cash-summary-grid">
+                    <div class="cash-card info">
+                        <div class="card-label">Saldo Inicial</div>
+                        <div class="card-value" id="dash-opening-balance">R$ 0,00</div>
+                        <div class="card-sub">Cédulas + Moedas</div>
+                    </div>
+                    
+                    <div class="cash-card success">
+                        <div class="card-label">Vendas (Dinheiro)</div>
+                        <div class="card-value" id="dash-cash-sales">R$ 0,00</div>
+                        <div class="card-sub">Entradas em espécie</div>
+                    </div>
+                    
+                    <div class="cash-card danger">
+                        <div class="card-label">Saídas/Despesas</div>
+                        <div class="card-value" id="dash-expenses">R$ 0,00</div>
+                        <div class="card-sub">Retiradas do caixa</div>
+                    </div>
+                    
+                    <div class="cash-card primary main-balance">
+                        <div class="card-label">Saldo em Gaveta (Sistema)</div>
+                        <div class="card-value" id="dash-current-balance">R$ 0,00</div>
+                        <div class="card-sub">Estimativa atual</div>
+                    </div>
+                </div>
+
+                <div class="divider" style="margin: 20px 0; border-bottom: 1px dashed #ccc;"></div>
+                
+                <div style="background: #f0f0f0; padding: 15px; border-radius: 8px;">
+                    <h3 style="margin-bottom: 10px; font-size: 1rem;">Outros Recebimentos</h3>
+                    <div class="summary-row" style="margin-bottom: 5px;">
+                        <span>💳 Cartão:</span>
+                        <span id="dash-card-total">R$ 0,00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>📱 PIX:</span>
+                        <span id="dash-pix-total">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <button id="btn-close-register" class="touch-btn btn-danger" style="width: 100%; margin-top: 20px;">Fechar Caixa</button>
+            </div>
+        </div>
+        
         <div class="tab-content active" id="venda-tab">
-            
             <div id="discount-balloon" class="discount-balloon" style="display: none;">
                 <span class="discount-icon">🏷️</span>
                 <div class="discount-text">
@@ -72,8 +148,7 @@
                     <div class="product-price">R$ <span id="calculated-price">0.00</span></div>
                 </div>
 
-                <div class="quick-add-buttons">
-                    </div>
+                <div class="quick-add-buttons"></div>
             </div>
             
             <div class="section-card">
@@ -230,7 +305,6 @@
         </div>
 
         <div class="tab-content" id="admin-tab">
-            
             <div class="section-card discount-section">
                 <h2 class="section-title">Gerenciar Promoções</h2>
                 <div class="discount-controls-container">
@@ -462,6 +536,29 @@
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button id="confirm-open-order-payment" class="touch-btn btn-success" style="flex: 1;">Confirmar Pagamento</button>
                 <button id="close-open-order-btn" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="close-register-modal">
+        <div class="modal-content">
+            <h3>Fechamento de Caixa</h3>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; font-size: 0.9rem; color: #555;">Preencha as informações abaixo para finalizar o expediente (opcional).</p>
+                
+                <div class="form-group">
+                    <label for="closing-balance-input">Saldo em Gaveta (Contagem Física)</label>
+                    <input type="number" id="closing-balance-input" class="admin-input" placeholder="R$ 0.00" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="closing-observation-input">Observações</label>
+                    <textarea id="closing-observation-input" class="admin-input" style="height: 100px; resize: none;" placeholder="Ex: Quebra de caixa, retirada para almoço..."></textarea>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="btn-confirm-close-register" class="touch-btn btn-danger" style="flex: 1;">Confirmar Fechamento</button>
+                <button id="btn-cancel-close-register" class="touch-btn btn-secondary" style="flex: 1;">Cancelar</button>
             </div>
         </div>
     </div>
